@@ -16,6 +16,8 @@ sql use d1
 
 print =============== create super table
 sql create table st (ts timestamp, i int) tags (j int)
+sql create table if not exists st (ts timestamp, i int) tags (j int)
+sql create table if not exists st (ts timestamp, i int) tags (j int)
 sql show stables
 if $rows != 1 then 
   return -1
@@ -137,7 +139,7 @@ if $rows != 3 then
   return -1
 endi
 
-print =============== query data frpm st
+print =============== query data from st
 sql select * from st
 if $rows != 21 then 
   return -1
@@ -198,7 +200,7 @@ if $rows != 3 then
   return -1
 endi
 
-print =============== query data frpm st
+print =============== query data from st
 sql select * from st
 if $rows != 21 then 
   return -1
