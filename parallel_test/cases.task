@@ -699,6 +699,7 @@
 5,,develop-test,python3 ./test.py -f 2-query/union-order.py 
 5,,develop-test,python3 ./test.py -f 2-query/timeline_agg_func_groupby.py 
 5,,develop-test,python3 ./test.py -f 2-query/session_two_stage.py 
+5,,develop-test,python3 ./test.py -f 2-query/function_histogram.py
 5,,develop-test,python3 ./test.py -f 0-others/TD-12435.py 
 5,,develop-test,python3 ./test.py -f 0-others/json_tag.py 
 4,,system-test,python3 test.py -f 4-taosAdapter/TD-12163.py 
