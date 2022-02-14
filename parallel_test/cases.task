@@ -12,7 +12,6 @@
 191,,pytest,python3 test.py -f stream/stream1.py 
 188,,pytest,python3 test.py -f stream/stream2.py 
 151,,script,./test.sh -f unique/vnode/replica3_repeat.sim 
-143,,script,./test.sh -f general/stream/stream_restart.sim 
 138,,pytest,python3 test.py -f insert/randomNullCommit.py 
 132,,pytest,python3 test.py -f functions/function_interp.py 
 131,,system-test,bash 3-connectors/python/test.sh 
@@ -52,6 +51,7 @@
 74,,script,./test.sh -f unique/arbitrator/dn3_mn1_replica_change.sim 
 74,,script,./test.sh -f unique/arbitrator/dn3_mn1_r3_vnode_delDir.sim 
 71,,script,./test.sh -f unique/mnode/mgmtr2.sim 
+70,,script,./test.sh -f general/stream/stream_restart.sim 
 69,,script,./test.sh -f unique/import/replica3.sim 
 69,,script,./test.sh -f unique/arbitrator/check_cluster_cfg_para.sim 
 69,,pytest,python3 test.py -f functions/function_sample.py -r 1 
