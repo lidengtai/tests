@@ -16,7 +16,6 @@
 132,,pytest,python3 test.py -f functions/function_interp.py 
 131,,system-test,bash 3-connectors/python/test.sh 
 128,,develop-test,bash 3-connectors/python/test.sh 
-127,,script,./test.sh -f general/stream/metrics_replica1_vnoden.sim 
 127,,pytest,python3 test.py -f query/queryConnection.py 
 121,2,script,./test.sh -f unique/cluster/balance3.sim 
 118,,script,./test.sh -f general/stream/stream_3.sim
@@ -50,6 +49,7 @@
 75,,script,./test.sh -f unique/account/usage.sim 
 74,,script,./test.sh -f unique/arbitrator/dn3_mn1_replica_change.sim 
 74,,script,./test.sh -f unique/arbitrator/dn3_mn1_r3_vnode_delDir.sim 
+74,,script,./test.sh -f general/stream/metrics_replica1_vnoden.sim
 71,,script,./test.sh -f unique/mnode/mgmtr2.sim 
 70,,script,./test.sh -f general/stream/stream_restart.sim 
 69,,script,./test.sh -f unique/import/replica3.sim 
@@ -99,7 +99,6 @@
 55,,develop-test,python3 ./test.py -f 1-insert/batchInsert.py 
 54,,script,./test.sh -f general/stream/table_replica1_vnoden.sim
 54,,script,./test.sh -f general/stream/table_del.sim
-54,,script,./test.sh -f general/stream/metrics_replica1_vnoden.sim
 ,,pytest,python3 ./test.py -f query/queryNcharNull.py
 ,,pytest,python3 ./test.py -f alter/alterBackQuoteCol.py
 ,,pytest,python3 ./test.py -f tsdb/tsdbComp.py
