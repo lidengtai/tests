@@ -3,8 +3,6 @@
 368,,develop-test/3-connectors/java,bash test.sh 
 299,,pytest,python3 test.py -f update/merge_commit_data-0.py 
 290,,pytest,python3 test.py -f update/merge_commit_data.py 
-263,,script,./test.sh -f general/stream/stream_3.sim 
-259,,script,./test.sh -f general/stream/restart_stream.sim 
 241,,pytest,python3 test.py -f update/merge_commit_data2.py 
 224,,pytest,python3 test.py -f query/queryNullValueTest.py 
 221,,pytest,python3 test.py -f query/nestedQuery/nestedQuery.py 
@@ -19,12 +17,11 @@
 132,,pytest,python3 test.py -f functions/function_interp.py 
 131,,system-test,bash 3-connectors/python/test.sh 
 128,,develop-test,bash 3-connectors/python/test.sh 
-127,,script,./test.sh -f general/stream/table_replica1_vnoden.sim 
-127,,script,./test.sh -f general/stream/table_del.sim 
 127,,script,./test.sh -f general/stream/metrics_replica1_vnoden.sim 
-127,,script,./test.sh -f general/stream/metrics_del.sim 
 127,,pytest,python3 test.py -f query/queryConnection.py 
 121,2,script,./test.sh -f unique/cluster/balance3.sim 
+118,,script,./test.sh -f general/stream/stream_3.sim
+118,,script,./test.sh -f general/stream/restart_stream.sim
 114,,script,./test.sh -f general/db/alter_tables_d2.sim 
 113,,pytest,python3 test.py -f update/append_commit_last.py 
 111,,script,./test.sh -f unique/vnode/replica2_repeat.sim 
@@ -100,6 +97,10 @@
 55,,script,./test.sh -f general/db/delete_reusevnode.sim 
 55,,pytest,python3 test.py -f stream/metric_n.py 
 55,,develop-test,python3 ./test.py -f 1-insert/batchInsert.py 
+54,,script,./test.sh -f general/stream/table_replica1_vnoden.sim
+54,,script,./test.sh -f general/stream/table_del.sim
+54,,script,./test.sh -f general/stream/metrics_replica1_vnoden.sim
+54,,script,./test.sh -f general/stream/metrics_del.sim
 ,,pytest,python3 ./test.py -f query/queryNcharNull.py
 ,,pytest,python3 ./test.py -f alter/alterBackQuoteCol.py
 ,,pytest,python3 ./test.py -f tsdb/tsdbComp.py
