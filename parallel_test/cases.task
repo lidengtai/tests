@@ -100,7 +100,6 @@
 54,,script,./test.sh -f general/stream/table_replica1_vnoden.sim
 54,,script,./test.sh -f general/stream/table_del.sim
 54,,script,./test.sh -f general/stream/metrics_replica1_vnoden.sim
-54,,script,./test.sh -f general/stream/metrics_del.sim
 ,,pytest,python3 ./test.py -f query/queryNcharNull.py
 ,,pytest,python3 ./test.py -f alter/alterBackQuoteCol.py
 ,,pytest,python3 ./test.py -f tsdb/tsdbComp.py
@@ -401,6 +400,7 @@
 15,,pytest,python3 test.py -f functions/function_max.py -r 1 
 15,,pytest,python3 test.py -f functions/function_last.py -r 1 
 15,,pytest,python3 test.py -f functions/function_avg.py -r 1 
+14,,script,./test.sh -f general/stream/metrics_del.sim
 14,,system-test,python3 ./test.py -f 5-taos-tools/TD-12478.py 
 14,,script,./test.sh -f unique/account/basic.sim 
 14,,script,./test.sh -f general/table/limit.sim 
