@@ -304,6 +304,11 @@
 20,,script,./test.sh -f general/parser/auto_create_tb_drop_tb.sim 
 20,,script,./test.sh -f general/import/basic.sim 
 20,2,script,./test.sh -f general/alter/dnode.sim 
+20,,pytest,python3 test.py -f 2-query/lower_func.py
+20,,pytest,python3 test.py -f 2-query/upper_func.py
+20,,pytest,python3 test.py -f 2-query/ltrim_func.py
+20,,pytest,python3 test.py -f 2-query/rtrim_func.py
+20,,pytest,python3 test.py -f 2-query/substr_func.py
 20,,pytest,python3 test.py -f query/query.py 
 20,,pytest,python3 test.py -f import_merge/importLastTO.py 
 20,,pytest,python3 test.py -f import_merge/importDataSub.py 
