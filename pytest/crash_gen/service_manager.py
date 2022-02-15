@@ -186,8 +186,8 @@ quorum 2
             return ["exec " + self.getExecFile(), '-c', self.getCfgDir()] # used in subproce.Popen()
     
     def _getDnodes(self, dbc):
-        dbc.query("show dnodes")
-        cols = dbc.getQueryResult() #  id,end_point,vnodes,cores,status,role,create_time,offline reason
+        cols, _ = dbc.query("show dnodes")
+        # cols = dbc.getQueryResult() #  id,end_point,vnodes,cores,status,role,create_time,offline reason
         return {c[1]:c[4] for c in cols} # {'xxx:6030':'ready', 'xxx:6130':'ready'}
 
     def createDnode(self, dbt: DbTarget):
@@ -769,9 +769,9 @@ class ServiceManagerThread:
     def _verifyDnode(self, tInst: TdeInstance):
         dbc = DbConn.createNative(tInst.getDbTarget())
         dbc.open()
-        dbc.query("show dnodes")
+        cols, nCol = dbc.query("show dnodes")
         # dbc.query("DESCRIBE {}.{}".format(dbName, self._stName))
-        cols = dbc.getQueryResult() #  id,end_point,vnodes,cores,status,role,create_time,offline reason
+        # cols = dbc.getQueryResult() #  id,end_point,vnodes,cores,status,role,create_time,offline reason
         # ret = {row[0]:row[1] for row in stCols if row[3]=='TAG'} # name:type
         isValid = False
         for col in cols:

@@ -79,7 +79,7 @@ class DbConn:
     def _queryAny(self, sql):  # actual query result as an int
         if (not self.isOpen):
             raise RuntimeError("Cannot query database until connection is open")
-        nRows = self.query(sql)
+        rows, nRows = self.query(sql)
         if nRows != 1:
             raise CrashGenError(
                 "Unexpected result for query: {}, rows = {}".format(sql, nRows), 
@@ -87,26 +87,27 @@ class DbConn:
             )
         if self.getResultRows() != 1 or self.getResultCols() != 1:
             raise RuntimeError("Unexpected result set for query: {}".format(sql))
-        return self.getQueryResult()[0][0]
+        return rows[0][0]
 
     def use(self, dbName):
         self.execute("use {}".format(dbName))
 
     def existsDatabase(self, dbName: str):
         ''' Check if a certain database exists '''
-        self.query("show databases")
-        dbs = [v[0] for v in self.getQueryResult()] # ref: https://stackoverflow.com/questions/643823/python-list-transformation
+        cols, _ = self.query("show databases")
+        dbs = [v[0] for v in cols] # ref: https://stackoverflow.com/questions/643823/python-list-transformation
         # ret2 = dbName in dbs
         # print("dbs = {}, str = {}, ret2={}, type2={}".format(dbs, dbName,ret2, type(dbName)))
         return dbName in dbs # TODO: super weird type mangling seen, once here
 
     def existsSuperTable(self, stName):
-        self.query("show stables")
-        sts = [v[0] for v in self.getQueryResult()]
+        rows, _ = self.query("show stables")
+        sts = [v[0] for v in rows]
         return stName in sts
 
     def hasTables(self):
-        return self.query("show tables") > 0
+        _, n = self.query("show tables")
+        return n > 0
 
     def execute(self, sql):
         ''' Return the number of rows affected'''
@@ -233,6 +234,7 @@ class MyTDSql:
         self._conn = taos.connect(host=hostAddr, config=cfgPath) 
         self._cursor = self._conn.cursor()
 
+        self.queryResult = None
         self.queryRows = 0
         self.queryCols = 0
         self.affectedRows = 0
@@ -248,12 +250,13 @@ class MyTDSql:
         self._conn.close() # TODO: very important, cursor close does NOT close DB connection!
         self._cursor.close()
 
-    def _execInternal(self, sql):        
+    def _execInternal(self, sql):    
+        # type: (str) -> taos.TaosResult
         startTime = time.time() 
         # Logging.debug("Executing SQL: " + sql)
         # ret = None # TODO: use strong type here
         # try: # Let's not capture the error, and let taos.error.ProgrammingError pass through
-        ret = self._cursor.execute(sql)
+        ret = self._conn.query(sql)
         # except taos.error.ProgrammingError as err:
         #     Logging.warning("Taos SQL execution error: {}, SQL: {}".format(err.msg, sql))
         #     raise CrashGenError(err.msg)
@@ -273,7 +276,7 @@ class MyTDSql:
             if sql[:11] == "INSERT INTO":
                 if sql[:16] == "INSERT INTO db_0":
                     sql2 = "INSERT INTO db_s" + sql[16:]
-                    self._cursor.execute(sql2)
+                    self._conn.execute(sql2)
                 else:
                     raise CrashGenError("Did not find db_0 in INSERT statement: {}".format(sql))
             else: # not an insert statement
@@ -282,7 +285,7 @@ class MyTDSql:
             if sql[:12] == "CREATE TABLE":
                 if sql[:17] == "CREATE TABLE db_0":
                     sql2 = sql.replace('db_0', 'db_s')
-                    self._cursor.execute(sql2)
+                    self._conn.execute(sql2)
                 else:
                     raise CrashGenError("Did not find db_0 in CREATE TABLE statement: {}".format(sql))
             else: # not an insert statement
@@ -293,21 +296,21 @@ class MyTDSql:
     def query(self, sql):
         self.sql = sql
         try:
-            self._execInternal(sql)
-            self.queryResult = self._cursor.fetchall()
-            self.queryRows = len(self.queryResult)
-            self.queryCols = len(self._cursor.description)
+            result = self._execInternal(sql)
+            # self.queryResult = result.fetch_all()
+            # self.queryRows = len(self.queryResult)
+            # self.queryCols = result.field_count
         except Exception as e:
             # caller = inspect.getframeinfo(inspect.stack()[1][0])
             # args = (caller.filename, caller.lineno, sql, repr(e))
             # tdLog.exit("%s(%d) failed: sql:%s, %s" % args)
             raise
-        return self.queryRows
+        return result.fetch_all()
 
     def execute(self, sql):
         self.sql = sql
         try:
-            self.affectedRows = self._execInternal(sql)
+            self.affectedRows = self._execInternal(sql).affected_rows
         except Exception as e:
             # caller = inspect.getframeinfo(inspect.stack()[1][0])
             # args = (caller.filename, caller.lineno, sql, repr(e))
@@ -375,7 +378,8 @@ class DbConnNative(DbConn):
         
     def close(self):
         if (not self.isOpen):
-            raise RuntimeError("Cannot clean up database until connection is open")
+            return # no need to close.
+            #raise RuntimeError("Cannot clean up database until connection is open")
         self._tdSql.close()
         # Decrement the class wide counter
         cls = self.__class__ # Get the class, to access class variables
@@ -407,13 +411,14 @@ class DbConnNative(DbConn):
                 "Cannot query database until connection is open, restarting?", CrashGenError.DB_CONNECTION_NOT_OPEN)
         Logging.debug("[SQL] Executing SQL: {}".format(sql))
         self._lastSql = sql
-        nRows = self._tdSql.query(sql)
+        rows = self._tdSql.query(sql)
+        nRows = len(rows)
         cls = self.__class__
         cls.totalRequests += 1
         Logging.debug(
             "[SQL] Query Result, nRows = {}, SQL = {}".format(
                 nRows, sql))
-        return nRows
+        return rows, nRows
         # results are in: return self._tdSql.queryResult
 
     def getQueryResult(self):
