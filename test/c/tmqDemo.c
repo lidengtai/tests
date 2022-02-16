@@ -199,7 +199,7 @@ int64_t getDirectorySize(char *dir)
         sprintf(subdir, "%s/%s", dir, entry->d_name);
         lstat(subdir, &statbuf);
 
-        printf("===d_name: %s\n", entry->d_name);
+        //printf("===d_name: %s\n", entry->d_name);
         if (S_ISDIR(statbuf.st_mode)) {
             if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0) {
                 continue;
@@ -414,10 +414,10 @@ void perf_loop(tmq_t* tmq, tmq_list_t* topics, int32_t totalMsgs, int64_t walLog
   double consumeTime = (double)(endTime - startTime) / CLOCKS_PER_SEC;
 
   if (batchCnt != totalMsgs) {
-    pError("inserted msgs: %d, consume msgs: %d\n", totalMsgs, batchCnt);
+	pPrint("%s inserted msgs: %d and consume msgs: %d mismatch %s", GREEN, totalMsgs, batchCnt, NC);
   }
 
-  printf("consume result: msgs: %d, skip log cnt: %d, time used:%.3f second\n", batchCnt, skipLogNum, consumeTime);
+  pPrint("consume result: msgs: %d, skip log cnt: %d, time used:%.3f second\n", batchCnt, skipLogNum, consumeTime);
   fprintf(g_fp, "|%10d    |   %10.3f    |  %8.2f  |  %8.2f|    %10.2f    |\n", batchCnt, consumeTime, (double)batchCnt / consumeTime, (double)walLogSize / 1000.0 / consumeTime, (double)walLogSize / 1000.0 / batchCnt);
 
   err = tmq_consumer_close(tmq);
