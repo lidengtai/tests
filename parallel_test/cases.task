@@ -9,6 +9,7 @@
 203,,pytest,python3 test.py -f update/merge_commit_last-0.py 
 191,,pytest,python3 test.py -f stream/stream1.py 
 188,,pytest,python3 test.py -f stream/stream2.py 
+160,,script,./test.sh -f general/stream/restart_stream.sim
 153,,script,./test.sh -f general/stream/stream_3.sim
 151,,script,./test.sh -f unique/vnode/replica3_repeat.sim 
 138,,pytest,python3 test.py -f insert/randomNullCommit.py 
@@ -18,7 +19,6 @@
 127,,pytest,python3 test.py -f query/queryConnection.py 
 124,,develop-test/3-connectors/java,bash test.sh 
 121,2,script,./test.sh -f unique/cluster/balance3.sim 
-118,,script,./test.sh -f general/stream/restart_stream.sim
 114,,script,./test.sh -f general/db/alter_tables_d2.sim 
 113,,pytest,python3 test.py -f update/append_commit_last.py 
 113,,pytest,python3 test.py -f update/append_commit_data.py
