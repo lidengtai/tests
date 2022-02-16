@@ -63,7 +63,7 @@ static SConfInfo g_stConfInfo = {
     1, // threads
     1, // tables
 	1, // vgroups
-    1, // run mode
+    0, // run mode
     1, // columns
     0, // ratio
     1, // batch size             
@@ -417,7 +417,6 @@ void perf_loop(tmq_t* tmq, tmq_list_t* topics, int32_t totalMsgs, int64_t walLog
     pError("inserted msgs: %d, consume msgs: %d\n", totalMsgs, batchCnt);
   }
 
-  //fprintf(fp, "|  insert msgs | insert time(s) |  msgs/s  | wal log size(KB) |  consume msgs | consume time(s) |  msgs/s  |   KB/s   | avg msg size(KB) |\n");
   printf("consume result: msgs: %d, skip log cnt: %d, time used:%.3f second\n", batchCnt, skipLogNum, consumeTime);
   fprintf(g_fp, "|%10d    |   %10.3f    |  %8.2f  |  %8.2f|    %10.2f    |\n", batchCnt, consumeTime, (double)batchCnt / consumeTime, (double)walLogSize / 1000.0 / consumeTime, (double)walLogSize / 1000.0 / batchCnt);
 
@@ -514,15 +513,9 @@ void printParaIntoFile() {
   fprintf(fp, "# totalRowsOfPerTbl:        %d\n",  g_stConfInfo.totalRowsOfPerTbl);
   fprintf(fp, "# Test time:                %d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1,
                                                                            tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-  fprintf(fp, "###################################################################\n\n");
+  fprintf(fp, "###################################################################\n");
   fprintf(fp, "|-------------------------insert info------------------------|-------------------------------consume info--------------------------------|\n");
   fprintf(fp, "| insert msgs | insert time(s) |   msgs/s   | walLogSize(KB) | consume msgs | consume time(s) |   msgs/s   |   KB/s   | avg msg size(KB) |\n");
-
-
-  
-  //fprintf(fp, "|  WRecords  | Records/Second | Requests/Second |  WLatency(ms) |\n");
-  //fprintf(fp, "|%10.d  |  %10.2f    |  %10.2f     |  %10.4f   |\n\n",
-  //        ntables * nrecords_per_table, ntables * nrecords_per_table / t, (ntables * nrecords_per_table) / (t * nrecords_per_request), t * 1000);
 }
 
 int main(int32_t argc, char *argv[]) {
