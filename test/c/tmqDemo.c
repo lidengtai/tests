@@ -17,6 +17,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <dirent.h>
+
 #include "taos.h"
 #include "taoserror.h"
 #include "ulog.h"
@@ -36,6 +42,7 @@ typedef struct {
 	char	dbName[32];
 	char	stbName[64];
 	char    resultFileName[256];
+	char    vnodeWalPath[256];
 	int32_t numOfThreads;
 	int32_t numOfTables;
 	int32_t numOfVgroups;
@@ -52,6 +59,7 @@ static SConfInfo g_stConfInfo = {
     "tmqdb",
     "stb",
 	"./tmqResult.txt",	// output_file
+	"/data2/dnode/data/vnode/vnode2/wal",
     1, // threads
     1, // tables
 	1, // vgroups
@@ -79,6 +87,8 @@ static void printHelp() {
   printf("%s%s%s%s\n", indent, indent, "The name of the super table to be created, default is ", g_stConfInfo.stbName);
   printf("%s%s\n", indent, "-f");
   printf("%s%s%s%s\n", indent, indent, "The file of result, default is ", g_stConfInfo.resultFileName);
+  printf("%s%s\n", indent, "-w");
+  printf("%s%s%s%s\n", indent, indent, "The path of vnode of wal, default is ", g_stConfInfo.vnodeWalPath);
   printf("%s%s\n", indent, "-t");
   printf("%s%s%s%d\n", indent, indent, "numOfThreads, default is ", g_stConfInfo.numOfThreads);
   printf("%s%s\n", indent, "-n");
@@ -97,7 +107,7 @@ static void printHelp() {
   printf("%s%s%s%d\n", indent, indent, "totalRowsOfPerTbl, default is ", g_stConfInfo.totalRowsOfPerTbl);
   printf("%s%s\n", indent, "-m");
   printf("%s%s%s%" PRId64 "\n", indent, indent, "startTimestamp, default is ", g_stConfInfo.startTimestamp);
-  printf("%s%s\n", indent, "-w");
+  printf("%s%s\n", indent, "-g");
   printf("%s%s%s%d\n", indent, indent, "showMsgFlag, default is ", g_stConfInfo.showMsgFlag);
 
   exit(EXIT_SUCCESS);
@@ -118,6 +128,10 @@ void parseArgument(int32_t argc, char *argv[]) {
       strcpy(configDir, argv[++i]);
     } else if (strcmp(argv[i], "-s") == 0) {
       strcpy(g_stConfInfo.stbName, argv[++i]);
+    } else if (strcmp(argv[i], "-w") == 0) {
+      strcpy(g_stConfInfo.vnodeWalPath, argv[++i]);
+    } else if (strcmp(argv[i], "-f") == 0) {
+      strcpy(g_stConfInfo.resultFileName, argv[++i]);
     } else if (strcmp(argv[i], "-t") == 0) {
       g_stConfInfo.numOfThreads = atoi(argv[++i]);
     } else if (strcmp(argv[i], "-n") == 0) {
@@ -136,7 +150,7 @@ void parseArgument(int32_t argc, char *argv[]) {
       g_stConfInfo.ratio = atof(argv[++i]);
     } else if (strcmp(argv[i], "-m") == 0) {
       g_stConfInfo.startTimestamp = atol(argv[++i]);
-    } else if (strcmp(argv[i], "-w") == 0) {
+    } else if (strcmp(argv[i], "-g") == 0) {
       g_stConfInfo.showMsgFlag = atol(argv[++i]);
     } else {
       pPrint("%s unknow para: %s %s", GREEN, argv[++i], NC);
@@ -144,9 +158,11 @@ void parseArgument(int32_t argc, char *argv[]) {
     }
   }
 
+  pPrint("%s configDir:%s %s", GREEN, configDir, NC);
   pPrint("%s dbName:%s %s", GREEN, g_stConfInfo.dbName, NC);
   pPrint("%s stbName:%s %s", GREEN, g_stConfInfo.stbName, NC);
-  pPrint("%s configDir:%s %s", GREEN, configDir, NC);
+  pPrint("%s resultFileName:%s %s", GREEN, g_stConfInfo.resultFileName, NC);
+  pPrint("%s vnodeWalPath:%s %s", GREEN, g_stConfInfo.vnodeWalPath, NC);
   pPrint("%s numOfTables:%d %s", GREEN, g_stConfInfo.numOfTables, NC);
   pPrint("%s numOfThreads:%d %s", GREEN, g_stConfInfo.numOfThreads, NC);
   pPrint("%s numOfVgroups:%d %s", GREEN, g_stConfInfo.numOfVgroups, NC);
@@ -161,6 +177,45 @@ void parseArgument(int32_t argc, char *argv[]) {
 
 static int  running = 1;
 static void msg_process(tmq_message_t* message) { tmqShowMsg(message); }
+
+// calc dir size (not include itself 4096Byte)
+int64_t getDirectorySize(char *dir)
+{
+    DIR *dp;
+    struct dirent *entry;
+    struct stat statbuf;
+    int64_t totalSize=0;
+
+    if ((dp = opendir(dir)) == NULL) {
+        fprintf(stderr, "Cannot open dir: %s\n", dir);
+        return -1; 
+    }
+
+    //lstat(dir, &statbuf);
+    //totalSize+=statbuf.st_size;
+
+    while ((entry = readdir(dp)) != NULL) {
+        char subdir[1024];
+        sprintf(subdir, "%s/%s", dir, entry->d_name);
+        lstat(subdir, &statbuf);
+
+        printf("===d_name: %s\n", entry->d_name);
+        if (S_ISDIR(statbuf.st_mode)) {
+            if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0) {
+                continue;
+            }
+
+            int64_t subDirSize = getDirectorySize(subdir);
+            totalSize+=subDirSize;
+        } else if (0 == strcmp(strchr(entry->d_name, '.'), ".log")) { // only calc .log file size, and not include .idx file	
+            totalSize+=statbuf.st_size;
+        }
+    }
+
+    closedir(dp);
+    return totalSize;
+}
+
 
 int queryDB(TAOS *taos, char *command) {
 	TAOS_RES *pRes = taos_query(taos, command);
@@ -331,7 +386,7 @@ void sync_consume_loop(tmq_t* tmq, tmq_list_t* topics) {
     fprintf(stderr, "%% Consumer closed\n");
 }
 
-void perf_loop(tmq_t* tmq, tmq_list_t* topics, int32_t totalMsgs) {
+void perf_loop(tmq_t* tmq, tmq_list_t* topics, int32_t totalMsgs, int64_t walLogSize) {
   tmq_resp_err_t err;
 
   if ((err = tmq_subscribe(tmq, topics))) {
@@ -356,12 +411,15 @@ void perf_loop(tmq_t* tmq, tmq_list_t* topics, int32_t totalMsgs) {
     }
   }
   clock_t endTime = clock();
+  double consumeTime = (double)(endTime - startTime) / CLOCKS_PER_SEC;
 
   if (batchCnt != totalMsgs) {
     pError("inserted msgs: %d, consume msgs: %d\n", totalMsgs, batchCnt);
   }
-  
-  printf("consume result: msgs: %d, skip log cnt: %d, time used:%.3f second\n", batchCnt, skipLogNum, (double)(endTime - startTime) / CLOCKS_PER_SEC);
+
+  //fprintf(fp, "|  insert msgs | insert time(s) |  msgs/s  | wal log size(KB) |  consume msgs | consume time(s) |  msgs/s  |   KB/s   | avg msg size(KB) |\n");
+  printf("consume result: msgs: %d, skip log cnt: %d, time used:%.3f second\n", batchCnt, skipLogNum, consumeTime);
+  fprintf(g_fp, "|%10d    |   %10.3f    |  %8.2f  |  %8.2f|    %10.2f    |\n", batchCnt, consumeTime, (double)batchCnt / consumeTime, (double)walLogSize / 1000.0 / consumeTime, (double)walLogSize / 1000.0 / batchCnt);
 
   err = tmq_consumer_close(tmq);
   if (err) {
@@ -429,14 +487,49 @@ int32_t syncWriteData() {
   return totalMsgs;
 }
 
+
+void printParaIntoFile() {
+  FILE *fp = fopen(g_stConfInfo.resultFileName, "a");
+  if (NULL == fp) {
+    fprintf(stderr, "Failed to open %s for save result\n", g_stConfInfo.resultFileName);
+    exit -1;
+  };
+  g_fp = fp;
+
+  time_t tTime = time(NULL);
+  struct tm tm = *localtime(&tTime);
+
+  fprintf(fp, "###################################################################\n");
+  fprintf(fp, "# configDir:                %s\n", configDir);
+  fprintf(fp, "# dbName:                   %s\n",  g_stConfInfo.dbName);
+  fprintf(fp, "# stbName:                  %s\n",  g_stConfInfo.stbName);
+  fprintf(fp, "# vnodeWalPath:             %s\n",  g_stConfInfo.vnodeWalPath);
+  fprintf(fp, "# numOfTables:              %d\n",  g_stConfInfo.numOfTables);
+  fprintf(fp, "# numOfThreads:             %d\n",  g_stConfInfo.numOfThreads);
+  fprintf(fp, "# numOfVgroups:             %d\n",  g_stConfInfo.numOfVgroups);
+  fprintf(fp, "# runMode:                  %d\n",  g_stConfInfo.runMode);
+  fprintf(fp, "# ratio:                    %f\n",  g_stConfInfo.ratio);
+  fprintf(fp, "# numOfColumn:              %d\n",  g_stConfInfo.numOfColumn);
+  fprintf(fp, "# batchNumOfRow:            %d\n",  g_stConfInfo.batchNumOfRow);
+  fprintf(fp, "# totalRowsOfPerTbl:        %d\n",  g_stConfInfo.totalRowsOfPerTbl);
+  fprintf(fp, "# Test time:                %d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1,
+                                                                           tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+  fprintf(fp, "###################################################################\n\n");
+  fprintf(fp, "|-------------------------insert info------------------------|-------------------------------consume info--------------------------------|\n");
+  fprintf(fp, "| insert msgs | insert time(s) |   msgs/s   | walLogSize(KB) | consume msgs | consume time(s) |   msgs/s   |   KB/s   | avg msg size(KB) |\n");
+
+
+  
+  //fprintf(fp, "|  WRecords  | Records/Second | Requests/Second |  WLatency(ms) |\n");
+  //fprintf(fp, "|%10.d  |  %10.2f    |  %10.2f     |  %10.4f   |\n\n",
+  //        ntables * nrecords_per_table, ntables * nrecords_per_table / t, (ntables * nrecords_per_table) / (t * nrecords_per_request), t * 1000);
+}
+
 int main(int32_t argc, char *argv[]) {
   parseArgument(argc, argv);
+  printParaIntoFile();
 
-  FILE *g_fp = fopen(g_stConfInfo.resultFileName, "a");
-  if (NULL == g_fp) {
-    fprintf(stderr, "Failed to open %s for save result\n", g_stConfInfo.resultFileName);
-    return -1;
-  };
+  int64_t walLogSize = 0;
 
   int code;
   code = init_env();
@@ -463,7 +556,16 @@ int main(int32_t argc, char *argv[]) {
 	float	seconds     = delay / 1000000.0;
 	float	rowsSpeed   = totalRows / seconds;	
 	float	msgsSpeed   = totalMsgs / seconds;
+	
+	walLogSize = getDirectorySize(g_stConfInfo.vnodeWalPath);
+	if (walLogSize <= 0) {
+	  pError("vnode2/wal size incorrect!");
+	} else {
+	  pPrint(".log file size in vnode2/wal: %" PRId64 " Bytes\n", walLogSize);
+	}
+	
 	pPrint("insert result: %d rows, %d msgs, time:%.3f sec, speed:%.1f rows/second, %.1f msgs/second\n", totalRows, totalMsgs, seconds, rowsSpeed, msgsSpeed);
+	fprintf(g_fp, "|%10d   |   %10.3f   |  %8.2f  |   %10.3f   ", totalMsgs, seconds, msgsSpeed, (double)walLogSize/1024.0);
   }
 
   if (g_stConfInfo.runMode == TMQ_RUN_ONLY_INSERT) {
@@ -476,10 +578,11 @@ int main(int32_t argc, char *argv[]) {
     return -1;
   }
   
-  perf_loop(tmq, topic_list, totalMsgs);
+  perf_loop(tmq, topic_list, totalMsgs, walLogSize);
 
   tfree(g_pRowValue);
-  
+  fprintf(g_fp, "\n");  
+  fclose(g_fp);  
   return 0;
 }
 
