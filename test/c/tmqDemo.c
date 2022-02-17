@@ -418,7 +418,7 @@ void perf_loop(tmq_t* tmq, tmq_list_t* topics, int32_t totalMsgs, int64_t walLog
   }
 
   pPrint("consume result: msgs: %d, skip log cnt: %d, time used:%.3f second\n", batchCnt, skipLogNum, consumeTime);
-  fprintf(g_fp, "|%10d    |   %10.3f    |  %8.2f  |  %8.2f|    %10.2f    |\n", batchCnt, consumeTime, (double)batchCnt / consumeTime, (double)walLogSize / 1000.0 / consumeTime, (double)walLogSize / 1000.0 / batchCnt);
+  fprintf(g_fp, "|%10d    |   %10.3f    |  %8.2f  |  %10.2f|    %10.2f    |\n", batchCnt, consumeTime, (double)batchCnt / consumeTime, (double)walLogSize / (1024 * 1024.0) / consumeTime, (double)walLogSize / 1024.0 / batchCnt);
 
   err = tmq_consumer_close(tmq);
   if (err) {
@@ -514,8 +514,8 @@ void printParaIntoFile() {
   fprintf(fp, "# Test time:                %d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1,
                                                                            tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
   fprintf(fp, "###################################################################\n");
-  fprintf(fp, "|-------------------------insert info------------------------|-------------------------------consume info--------------------------------|\n");
-  fprintf(fp, "| insert msgs | insert time(s) |   msgs/s   | walLogSize(KB) | consume msgs | consume time(s) |   msgs/s   |   KB/s   | avg msg size(KB) |\n");
+  fprintf(fp, "|-------------------------insert info------------------------|--------------------------------consume info---------------------------------|\n");
+  fprintf(fp, "| insert msgs | insert time(s) |   msgs/s   | walLogSize(MB) | consume msgs | consume time(s) |   msgs/s   |    MB/s    | avg msg size(KB) |\n");
 }
 
 int main(int32_t argc, char *argv[]) {
@@ -558,7 +558,7 @@ int main(int32_t argc, char *argv[]) {
 	}
 	
 	pPrint("insert result: %d rows, %d msgs, time:%.3f sec, speed:%.1f rows/second, %.1f msgs/second\n", totalRows, totalMsgs, seconds, rowsSpeed, msgsSpeed);
-	fprintf(g_fp, "|%10d   |   %10.3f   |  %8.2f  |   %10.3f   ", totalMsgs, seconds, msgsSpeed, (double)walLogSize/1024.0);
+	fprintf(g_fp, "|%10d   |   %10.3f   |  %8.2f  |   %10.3f   ", totalMsgs, seconds, msgsSpeed, (double)walLogSize/(1024 * 1024.0));
   }
 
   if (g_stConfInfo.runMode == TMQ_RUN_ONLY_INSERT) {
