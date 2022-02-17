@@ -31,6 +31,9 @@
 #define NC "\033[0m"
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
+#define  MAX_SQL_STR_LEN    (1024 * 1024)
+#define  MAX_ROW_STR_LEN    (16 * 1024)
+
 enum _RUN_MODE {
     TMQ_RUN_INSERT_AND_CONSUME,
     TMQ_RUN_ONLY_INSERT,
@@ -443,7 +446,7 @@ int32_t syncWriteData() {
   taos_free_result(pRes);
 
   char* buffer = NULL;
-  buffer = (char*)malloc(1024*1024);
+  buffer = (char*)malloc(MAX_SQL_STR_LEN);
   if (NULL == buffer) {
     return -1;
   }
@@ -456,15 +459,21 @@ int32_t syncWriteData() {
       int inserted = i;
       int64_t tmp_time = time_counter;
 
-      char *pstr = buffer;
-      pstr += sprintf(pstr, "insert into %s%d values", g_stConfInfo.stbName, tID);
+      int32_t data_len = 0;
+      data_len += sprintf(buffer + data_len, "insert into %s%d values", g_stConfInfo.stbName, tID);
       int k;
       for (k = 0; k < g_stConfInfo.batchNumOfRow;) {
-        pstr += sprintf(pstr, "(%" PRId64 ", %s) ", tmp_time++, g_pRowValue);
+        data_len += sprintf(buffer + data_len, "(%" PRId64 ", %s) ", tmp_time++, g_pRowValue);
         inserted++;
         k++;
 
-        if (inserted >= g_stConfInfo.totalRowsOfPerTbl) break;
+        if (inserted >= g_stConfInfo.totalRowsOfPerTbl) {
+		  break;
+        }
+
+		if (data_len > MAX_SQL_STR_LEN - MAX_ROW_STR_LEN) {
+          break;
+        }		
       }
 
       int code = queryDB(pConn, buffer);
@@ -514,8 +523,9 @@ void printParaIntoFile() {
   fprintf(fp, "# Test time:                %d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1,
                                                                            tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
   fprintf(fp, "###################################################################\n");
-  fprintf(fp, "|-------------------------insert info------------------------|--------------------------------consume info---------------------------------|\n");
-  fprintf(fp, "| insert msgs | insert time(s) |   msgs/s   | walLogSize(MB) | consume msgs | consume time(s) |   msgs/s   |    MB/s    | avg msg size(KB) |\n");
+  fprintf(fp, "|-------------------------------insert info-----------------------------|--------------------------------consume info---------------------------------|\n");
+  fprintf(fp, "|batch size| insert msgs | insert time(s) |   msgs/s   | walLogSize(MB) | consume msgs | consume time(s) |   msgs/s   |    MB/s    | avg msg size(KB) |\n");
+  fprintf(g_fp, "|%10d", g_stConfInfo.batchNumOfRow);
 }
 
 int main(int32_t argc, char *argv[]) {
