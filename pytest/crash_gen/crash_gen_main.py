@@ -2429,7 +2429,7 @@ class MainExec:
                 TDengine Auto Crash Generator (PLEASE NOTICE the Prerequisites Below)
                 ---------------------------------------------------------------------
                 1. You build TDengine in the top level ./build directory, as described in offical docs
-                2. You run the server there before this script: ./build/bin/taosd -c test/cfg ,you can also set run path by -v or --set-path
+                2. You run the server there before this script: ./build/bin/taosd -c test/cfg ,you can also set run path by -z or --set-path
 
                 '''))                      
 
