@@ -231,7 +231,7 @@ int queryDB(TAOS *taos, char *command) {
 	int code = taos_errno(pRes);
 	//if ((code != 0) && (code != TSDB_CODE_RPC_AUTH_REQUIRED)) {
 	if (code != 0) {
-	  pError("failed to reason:%s, sql: %s", command, tstrerror(code));
+	  pError("failed to reason:%s, sql: %s", tstrerror(code), command);
 	  taos_free_result(pRes);
 	  return -1;
 	}
