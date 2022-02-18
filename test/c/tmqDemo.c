@@ -56,6 +56,8 @@ typedef struct {
 	int32_t totalRowsOfPerTbl;
 	int64_t startTimestamp;
 	int32_t showMsgFlag;
+	
+	int32_t totalRowsOfT2;
 } SConfInfo;
 
 static SConfInfo g_stConfInfo = {
@@ -68,11 +70,12 @@ static SConfInfo g_stConfInfo = {
 	1, // vgroups
     0, // run mode
     1, // columns
-    0, // ratio
+    1, // ratio
     1, // batch size             
     10000, // total rows for per table
     0,  // 2020-01-01 00:00:00.000
     0,  // show consume msg switch
+    10000,
 };
 
 char* g_pRowValue = NULL;
@@ -161,6 +164,8 @@ void parseArgument(int32_t argc, char *argv[]) {
     }
   }
 
+  g_stConfInfo.totalRowsOfT2 = g_stConfInfo.totalRowsOfPerTbl * g_stConfInfo.ratio;
+
   pPrint("%s configDir:%s %s", GREEN, configDir, NC);
   pPrint("%s dbName:%s %s", GREEN, g_stConfInfo.dbName, NC);
   pPrint("%s stbName:%s %s", GREEN, g_stConfInfo.stbName, NC);
@@ -174,6 +179,7 @@ void parseArgument(int32_t argc, char *argv[]) {
   pPrint("%s numOfColumn:%d %s", GREEN, g_stConfInfo.numOfColumn, NC);
   pPrint("%s batchNumOfRow:%d %s", GREEN, g_stConfInfo.batchNumOfRow, NC);
   pPrint("%s totalRowsOfPerTbl:%d %s", GREEN, g_stConfInfo.totalRowsOfPerTbl, NC);
+  pPrint("%s totalRowsOfT2:%d %s", GREEN, g_stConfInfo.totalRowsOfT2, NC);
   pPrint("%s startTimestamp:%" PRId64" %s", GREEN, g_stConfInfo.startTimestamp, NC);
   pPrint("%s showMsgFlag:%d %s", GREEN, g_stConfInfo.showMsgFlag, NC);
 }
@@ -496,6 +502,98 @@ int32_t syncWriteData() {
 }
 
 
+// sync insertion
+int32_t syncWriteDataByRatio() {
+  TAOS* pConn = taos_connect(NULL, "root", "taosdata", NULL, 0);
+  if (pConn == NULL) {
+	return -1;
+  }
+
+  char sqlStr[1024] = {0};
+  sprintf(sqlStr, "use %s", g_stConfInfo.dbName);
+  TAOS_RES* pRes = taos_query(pConn, sqlStr);
+  if (taos_errno(pRes) != 0) {
+    printf("error in use db, reason:%s\n", taos_errstr(pRes));
+    return -1;
+  }
+  taos_free_result(pRes);
+
+  char* buffer = NULL;
+  buffer = (char*)malloc(MAX_SQL_STR_LEN);
+  if (NULL == buffer) {
+    return -1;
+  }
+
+  int32_t totalMsgs = 0;
+
+  int32_t insertedOfT1 = 0;
+  int32_t insertedOfT2 = 0;  
+
+  int64_t tsOfT1 = g_stConfInfo.startTimestamp;
+  int64_t tsOfT2 = g_stConfInfo.startTimestamp;
+  int64_t tmp_time;
+  
+  for (;;) {
+  	if ((insertedOfT1 >= g_stConfInfo.totalRowsOfPerTbl) && (insertedOfT2 >= g_stConfInfo.totalRowsOfT2)) {
+      break;
+	}
+	
+    for (int tID = 0; tID <= g_stConfInfo.numOfTables - 1; tID++) {
+      if (0 == tID) {
+	  	tmp_time = tsOfT1;
+        if (insertedOfT1 >= g_stConfInfo.totalRowsOfPerTbl) {
+      	  continue;
+        }
+      } else if (1 == tID){
+	  	tmp_time = tsOfT2;
+        if (insertedOfT2 >= g_stConfInfo.totalRowsOfT2) {
+      	  continue;
+        }
+      }
+
+      int32_t data_len = 0;
+      data_len += sprintf(buffer + data_len, "insert into %s%d values", g_stConfInfo.stbName, tID);
+      int k;
+      for (k = 0; k < g_stConfInfo.batchNumOfRow;) {
+        data_len += sprintf(buffer + data_len, "(%" PRId64 ", %s) ", tmp_time++, g_pRowValue);
+        k++;
+		if (0 == tID) {
+          insertedOfT1++;
+		  if (insertedOfT1 >= g_stConfInfo.totalRowsOfPerTbl) {
+			break;
+		  }
+		} else if (1 == tID){
+          insertedOfT2++;
+		  if (insertedOfT2 >= g_stConfInfo.totalRowsOfT2) {
+			break;
+		  }
+		}
+
+		if (data_len > MAX_SQL_STR_LEN - MAX_ROW_STR_LEN) {
+          break;
+        }		
+      }
+
+      int code = queryDB(pConn, buffer);
+	  if (0 != code){
+        fprintf(stderr, "insert data error!\n");
+		tfree(buffer);
+	    return -1;
+	  }
+	  
+      if (0 == tID) {
+	  	tsOfT1 = tmp_time;
+      } else if (1 == tID){
+	  	tsOfT2 = tmp_time;
+      }
+
+	  totalMsgs++;
+    }
+  }
+  tfree(buffer);
+  return totalMsgs;
+}
+
 void printParaIntoFile() {
   FILE *fp = fopen(g_stConfInfo.resultFileName, "a");
   if (NULL == fp) {
@@ -520,6 +618,7 @@ void printParaIntoFile() {
   fprintf(fp, "# numOfColumn:              %d\n",  g_stConfInfo.numOfColumn);
   fprintf(fp, "# batchNumOfRow:            %d\n",  g_stConfInfo.batchNumOfRow);
   fprintf(fp, "# totalRowsOfPerTbl:        %d\n",  g_stConfInfo.totalRowsOfPerTbl);
+  fprintf(fp, "# totalRowsOfT2:            %d\n",  g_stConfInfo.totalRowsOfT2);
   fprintf(fp, "# Test time:                %d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1,
                                                                            tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
   fprintf(fp, "###################################################################\n");
@@ -546,7 +645,12 @@ int main(int32_t argc, char *argv[]) {
   if (g_stConfInfo.runMode != TMQ_RUN_ONLY_CONSUME) {
   	
     int64_t startTs = taosGetTimestampUs();
-    totalMsgs = syncWriteData();  
+    if (1 == g_stConfInfo.ratio) {
+      totalMsgs = syncWriteData(); 
+    } else {
+      totalMsgs = syncWriteDataByRatio(); 
+	}
+  
     if (totalMsgs <= 0) {
 	  pError("inset data error!\n");
       return -1;
@@ -564,7 +668,7 @@ int main(int32_t argc, char *argv[]) {
 	if (walLogSize <= 0) {
 	  pError("vnode2/wal size incorrect!");
 	} else {
-	  pPrint(".log file size in vnode2/wal: %" PRId64 " Bytes\n", walLogSize);
+	  pPrint(".log file size in vnode2/wal: %.3f MBytes\n", (double)walLogSize/(1024 * 1024.0));
 	}
 	
 	pPrint("insert result: %d rows, %d msgs, time:%.3f sec, speed:%.1f rows/second, %.1f msgs/second\n", totalRows, totalMsgs, seconds, rowsSpeed, msgsSpeed);
