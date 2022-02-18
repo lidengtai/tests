@@ -590,6 +590,7 @@ int32_t syncWriteDataByRatio() {
 	  totalMsgs++;
     }
   }
+  pPrint("expect insert rows: T1[%d] T2[%d], actual insert rows: T1[%d] T2[%d]\n", g_stConfInfo.totalRowsOfPerTbl, g_stConfInfo.totalRowsOfT2, insertedOfT1, insertedOfT2);
   tfree(buffer);
   return totalMsgs;
 }
@@ -658,7 +659,12 @@ int main(int32_t argc, char *argv[]) {
 	int64_t endTs = taosGetTimestampUs();
 	int64_t delay = endTs - startTs;
 
-	int32_t totalRows = g_stConfInfo.totalRowsOfPerTbl * g_stConfInfo.numOfTables;
+	int32_t totalRows = 0;
+	if (1 == g_stConfInfo.ratio) {
+	  totalRows = g_stConfInfo.totalRowsOfPerTbl * g_stConfInfo.numOfTables;
+	} else {
+	  totalRows = g_stConfInfo.totalRowsOfPerTbl * (1 + g_stConfInfo.ratio);
+	} 
 	
 	float	seconds     = delay / 1000000.0;
 	float	rowsSpeed   = totalRows / seconds;	
