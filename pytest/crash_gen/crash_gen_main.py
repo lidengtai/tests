@@ -1310,6 +1310,7 @@ class Task():
                 0x14,   # db not ready, errno changed
                 0x600,  # Invalid table ID, why?
                 0x218,  # Table does not exist
+                0x993,  # connection is not open
                 1000  # REST catch-all error
             ]: 
             return True # These are the ALWAYS-ACCEPTABLE ones
@@ -1698,17 +1699,18 @@ class TdSuperTable:
     def getRegTables(self, dbc: DbConn):
         dbName = self._dbName
         try:
-            dbc.query("select TBNAME from {}.{}".format(dbName, self._stName))  # TODO: analyze result set later            
+            qr, n = dbc.query("select TBNAME from {}.{}".format(dbName, self._stName))  # TODO: analyze result set later  
+            return [v[0] for v in qr] # list transformation, ref: https://stackoverflow.com/questions/643823/python-list-transformation          
         except taos.error.ProgrammingError as err:                    
             errno2 = Helper.convertErrno(err.errno) 
             Logging.debug("[=] Failed to get tables from super table: errno=0x{:X}, msg: {}".format(errno2, err))
             raise
 
-        qr = dbc.getQueryResult()
-        return [v[0] for v in qr] # list transformation, ref: https://stackoverflow.com/questions/643823/python-list-transformation
+        # qr = dbc.getQueryResult()
 
     def hasRegTables(self, dbc: DbConn):
-        return dbc.query("SELECT * FROM {}.{}".format(self._dbName, self._stName)) > 0
+        _, n = dbc.query("SELECT * FROM {}.{}".format(self._dbName, self._stName))
+        return n > 0
 
     def ensureRegTable(self, task: Optional[Task], dbc: DbConn, regTableName: str):
         '''
@@ -1718,7 +1720,8 @@ class TdSuperTable:
         '''
         dbName = self._dbName
         sql = "select tbname from {}.{} where tbname in ('{}')".format(dbName, self._stName, regTableName)
-        if dbc.query(sql) >= 1 : # reg table exists already
+        _, n = dbc.query(sql)
+        if n >= 1 : # reg table exists already
             return
 
         # acquire a lock first, so as to be able to *verify*. More details in TD-1471
@@ -1758,9 +1761,13 @@ class TdSuperTable:
         return ", ".join(tagStrs)
 
     def _getTags(self, dbc) -> dict:
-        dbc.query("DESCRIBE {}.{}".format(self._dbName, self._stName))
-        stCols = dbc.getQueryResult()
-        # print(stCols)
+        stCols, nCols = dbc.query("DESCRIBE {}.{}".format(self._dbName, self._stName))
+        # stCols = dbc.getQueryResult()
+        print(stCols)
+        if len(stCols) == 0:
+            return {}
+        if len(stCols[0]) <= 3:
+            raise RuntimeError("stCols: {}".format(stCols[0]))
         ret = {row[0]:row[1] for row in stCols if row[3]=='TAG'} # name:type
         # print("Tags retrieved: {}".format(ret))
         return ret
@@ -2400,7 +2407,10 @@ class MainExec:
     def runClient(self):
         global gSvcMgr
         if Config.getConfig().auto_start_service:
-            gSvcMgr = self._svcMgr = ServiceManager(1) # hack alert
+            if Config.getConfig().num_dnodes>1: # multi taosd instance
+                gSvcMgr = self._svcMgr = ServiceManager(Config.getConfig().num_dnodes) # 
+            else:
+                gSvcMgr = self._svcMgr = ServiceManager(1) # hack alert ,single taosd instance
             gSvcMgr.startTaosServices() # we start, don't run
         
         self._clientMgr = ClientManager()
