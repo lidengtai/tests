@@ -606,7 +606,7 @@ void printParaIntoFile() {
   time_t tTime = time(NULL);
   struct tm tm = *localtime(&tTime);
 
-  fprintf(fp, "###################################################################\n");
+  fprintf(fp, "\n###################################################################\n");
   fprintf(fp, "# configDir:                %s\n", configDir);
   fprintf(fp, "# dbName:                   %s\n",  g_stConfInfo.dbName);
   fprintf(fp, "# stbName:                  %s\n",  g_stConfInfo.stbName);
