@@ -303,6 +303,9 @@
 20,,script,./test.sh -f general/parser/auto_create_tb_drop_tb.sim 
 20,,script,./test.sh -f general/import/basic.sim 
 20,2,script,./test.sh -f general/alter/dnode.sim 
+20,,script,./test.sh -f general/compute/math_funcs.sim 
+20,,script,./test.sh -f general/compute/cast.sim 
+20,,script,./test.sh -f general/compute/string_funcs.sim 
 20,,develop-test,python3 test.py -f 2-query/lower_func.py
 20,,develop-test,python3 test.py -f 2-query/upper_func.py
 20,,develop-test,python3 test.py -f 2-query/ltrim_func.py
