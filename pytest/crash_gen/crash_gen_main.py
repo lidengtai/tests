@@ -2400,7 +2400,10 @@ class MainExec:
     def runClient(self):
         global gSvcMgr
         if Config.getConfig().auto_start_service:
-            gSvcMgr = self._svcMgr = ServiceManager(1) # hack alert
+            if Config.getConfig().num_dnodes>1: # multi taosd instance
+                gSvcMgr = self._svcMgr = ServiceManager(Config.getConfig().num_dnodes) # 
+            else:
+                gSvcMgr = self._svcMgr = ServiceManager(1) # hack alert ,single taosd instance
             gSvcMgr.startTaosServices() # we start, don't run
         
         self._clientMgr = ClientManager()
@@ -2426,7 +2429,7 @@ class MainExec:
                 TDengine Auto Crash Generator (PLEASE NOTICE the Prerequisites Below)
                 ---------------------------------------------------------------------
                 1. You build TDengine in the top level ./build directory, as described in offical docs
-                2. You run the server there before this script: ./build/bin/taosd -c test/cfg
+                2. You run the server there before this script: ./build/bin/taosd -c test/cfg ,you can also set run path by -z or --set-path
 
                 '''))                      
 
@@ -2539,6 +2542,13 @@ class MainExec:
             '--continue-on-exception',
             action='store_true',
             help='Continue execution after encountering unexpected/disallowed errors/exceptions (default: false)')
+        parser.add_argument(
+            '-z',
+            '--set-path',
+            action='store',
+            default='',
+            type=str,
+            help='set crash_gen run path instead of defalut path ')
 
         return parser
 
