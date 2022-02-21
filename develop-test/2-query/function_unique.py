@@ -1,5 +1,5 @@
 ###################################################################
-#           Copyright (c) 2021 by TAOS Technologies, Inc.
+#  Copyright (c) 2021 by TAOS Technologies, Inc.
 #                     All rights reserved.
 #
 #  This file is proprietary and confidential to TAOS Technologies.
@@ -262,17 +262,17 @@ class TDTestCase:
         tdSql.checkData(0, 1, 1)
         tdSql.checkData(3, 1, 1)
 
-        tdSql.execute('create table unique1 (ts timestamp, voltage bigint,num smallint, dbool bool, dtiny tinyint unsigned, dfloat float, ddouble double, dchar nchar(64), dbinary binary(64)) tags (jtag json)')
+        tdSql.execute('create table unique1 (ts timestamp, voltage bigint,num smallint, dbool bool, dtiny tinyint unsigned, dfloat float, ddouble double, dchar nchar(4093), dbinary binary(64), dtime timestamp) tags (jtag json)')
         tdSql.execute('create table D011 using unique1 tags (\'{"k1":"v1"}\')')
         tdSql.execute('create table D012 using unique1 tags (\'{"k1":"v1","k2":7}\')')
         tdSql.execute('create table D013 using unique1 tags (\'{"k3":"v3"}\')')
 
-        tdSql.execute('insert into D011 values("2021-10-17 00:31:31", 1, -3276, true, 253, 3.32333, 4.984392323, "你好", "sddd") ("2022-01-24 00:31:31", 1, -32767, false, 254, NULL, 4.982392323, "你好吗", "sdf")')
-        tdSql.execute('insert into D012 values("2021-10-17 00:31:31", 1, NULL, true, 23, 3.4, 4.982392323, "你好吗", "sdf") ("2021-12-24 00:31:31", 2, 32767, NULL, NULL, NULL, 4.982392323, NULL, "sddd") ("2022-01-01 08:00:01", 19, 3276, true, 2, 3.323222, 4.92323, "试试", "sddd")')
-        tdSql.execute('insert into D013 values("2021-10-17 00:31:31", NULL, 32767, true, 123, 3.323232333, 4.2, NULL, NULL) ("2022-01-01 08:00:02", NULL, NULL, NULL, 35, 3.323232333, NULL, "试试", NULL) ("2022-01-01 08:00:03", 9, 54, true, 25, 3.32333, NULL, "试试", NULL)')
+        tdSql.execute('insert into D011 values("2021-10-17 00:31:31", 1, -3276, true, 253, 3.32333, 4.984392323, "你好", "sddd", 333) ("2022-01-24 00:31:31", 1, -32767, false, 254, NULL, 4.982392323, "你好吗", "sdf",2323)')
+        tdSql.execute('insert into D012 values("2021-10-17 00:31:31", 1, NULL, true, 23, 3.4, 4.982392323, "你好吗", "sdf", 333) ("2021-12-24 00:31:31", 2, 32767, NULL, NULL, NULL, 4.982392323, NULL, "sddd", NULL) ("2022-01-01 08:00:01", 19, 3276, true, 2, 3.323222, 4.92323, "试试", "sddd", 1645434434000)')
+        tdSql.execute('insert into D013 values("2021-10-17 00:31:31", NULL, 32767, true, 123, 3.323232333, 4.2, NULL, NULL, NULL) ("2022-01-01 08:00:02", NULL, NULL, NULL, 35, 3.323232333, NULL, "试试", NULL, 1645434434000) ("2022-01-01 08:00:03", 9, 54, true, 25, 3.32333, NULL, "试试", NULL, 1645434434001)')
 
         #null/nchar/binary
-        tdSql.query('select unique(dchar) from unique1')
+        tdSql.query('select unique(dchar),jtag from unique1')
         tdSql.checkRows(4)
         tdSql.checkData(0, 0, "2021-10-17 00:31:31")
         tdSql.checkData(0, 1, "你好")
@@ -300,6 +300,9 @@ class TDTestCase:
         tdSql.query('select unique(dfloat) from unique1')
         tdSql.checkRows(5)
 
+        tdSql.query('select unique(dtime) from unique1')
+        tdSql.checkRows(5)
+
         #join
         tdSql.execute('create table unique2 (ts timestamp, voltage bigint,num int) tags (location binary(30), groupid int)')
         tdSql.execute('create table D021 using unique2 tags ("Beijing.Chaoyang", 1)')
@@ -315,3 +318,4 @@ class TDTestCase:
 
 tdCases.addWindows(__file__, TDTestCase())
 tdCases.addLinux(__file__, TDTestCase())
+
