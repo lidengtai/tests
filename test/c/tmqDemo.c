@@ -264,7 +264,7 @@ int32_t init_env() {
   taos_free_result(pRes);
 
   // create row value
-  g_pRowValue = (char*)malloc(g_stConfInfo.numOfColumn * 16 + 128);
+  g_pRowValue = (char*)calloc(1, g_stConfInfo.numOfColumn * 16 + 128);
   if (NULL == g_pRowValue) {
     return -1;
   }
@@ -275,11 +275,13 @@ int32_t init_env() {
   for (int32_t i = 0; i < g_stConfInfo.numOfColumn; i++) {
   	if (i == g_stConfInfo.numOfColumn - 1) {
       sqlLen += sprintf(sqlStr+sqlLen, "c%d int) ", i);
-	  tstrncpy(g_pRowValue + dataLen, "66778899", min(strlen("66778899"), 16));
+	  memcpy(g_pRowValue + dataLen, "66778899", strlen("66778899"));
+	  dataLen += strlen("66778899");
   	} else {
       sqlLen += sprintf(sqlStr+sqlLen, "c%d int, ", i);
-	  tstrncpy(g_pRowValue + dataLen, "66778899, ", min(strlen("66778899"), 16));
-	}	
+	  memcpy(g_pRowValue + dataLen, "66778899, ", strlen("66778899, "));
+	  dataLen += strlen("66778899, ");
+	}
   }
   sqlLen += sprintf(sqlStr+sqlLen, "tags (t0 int)");
 
@@ -606,7 +608,7 @@ void printParaIntoFile() {
   time_t tTime = time(NULL);
   struct tm tm = *localtime(&tTime);
 
-  fprintf(fp, "\n###################################################################\n");
+  fprintf(fp, "###################################################################\n");
   fprintf(fp, "# configDir:                %s\n", configDir);
   fprintf(fp, "# dbName:                   %s\n",  g_stConfInfo.dbName);
   fprintf(fp, "# stbName:                  %s\n",  g_stConfInfo.stbName);
