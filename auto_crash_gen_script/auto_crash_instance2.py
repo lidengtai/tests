@@ -18,7 +18,7 @@ import time
 
 # set path about run instance
 base_dir = os.path.dirname(os.path.realpath(__file__))
-home_dir = base_dir[:base_dir.find("TDinternal_test")]
+home_dir = base_dir[:base_dir.find("community")]
 run_dir = os.path.join(home_dir,'run_dir')
 run_dir = os.path.abspath(run_dir)
 print("run dir is set at :",run_dir)
