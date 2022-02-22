@@ -18,7 +18,9 @@ import time
 
 # set path about run instance
 base_dir = os.path.dirname(os.path.realpath(__file__))
-home_dir = base_dir[:base_dir.find("TDengine")]
+print("base",base_dir)
+home_dir = base_dir[:base_dir.find("community")]
+print("home",home_dir)
 run_dir = os.path.join(home_dir,'run_dir')
 run_dir = os.path.abspath(run_dir)
 print("run dir is set at :",run_dir)
@@ -110,7 +112,7 @@ def limits(args_list):
 
 def get_cmds(args_list):
     build_path = get_path()
-    crash_gen_path = build_path[:-5]+"tests/pytest/"
+    crash_gen_path = build_path[:-5]+"community/tests/pytest/"
     bools_args_list = ["--auto-start-service" , "--debug","--run-tdengine","--ignore-errors","--track-memory-leaks","--larger-data","--mix-oos-data","--dynamic-db-table-names",
     "--per-thread-db-connection","--record-ops","--verify-data","--use-shadow-db","--continue-on-exception"]
     arguments = ""
@@ -149,7 +151,7 @@ def main():
         "--continue-on-exception":False }
 
     build_path = get_path()
-    crash_gen_path = build_path[:-5]+"tests/pytest/"
+    crash_gen_path = build_path[:-5]+"community/tests/pytest/"
     print(crash_gen_path)
     if os.path.exists(crash_gen_path+"crash_gen.sh"):
         print(" make sure crash_gen.sh is ready")
