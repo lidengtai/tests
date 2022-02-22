@@ -61,7 +61,7 @@ def random_args(args_list):
     args_list["--num-dnodes"]= random.randint(1,7)
     args_list["--num-replicas"]= random.randint(1,args_list["--num-dnodes"])
     args_list["--debug"]=False
-    args_list["per-thread-db-connection"]=True
+    args_list["--per-thread-db-connection"]=True
     args_list["--max-steps"]=random.randint(50,300)
     args_list["--num-threads"]=random.randint(8,32) #$ debug
     args_list["--ignore-errors"]=[]   ## can add error codes for detail
@@ -78,6 +78,8 @@ def random_args(args_list):
         elif key == "--ignore-errors":
             continue
         elif key == "--debug":
+            continue
+        elif key == "--per-thread-db-connection":
             continue
         else:
             args_list[key]=set_bool_value[random.randint(0,1)]
