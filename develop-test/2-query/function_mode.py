@@ -47,21 +47,14 @@ class TDTestCase:
         tdSql.error("select mode(ts) from smode")
         tdSql.error("select ts, mode(voltage) from smode")
         tdSql.error("select mode(voltage),groupid from smode")
-
-        tdSql.error("select ts,mode(voltage) from smode interval(1s)")
-        tdSql.error("select unique(voltage) from unique interval(1s) fill(value)")
-        tdSql.error("select unique(voltage) from unique session(ts, 20s)")
-        tdSql.error("select unique(voltage) from unique state_window(num)")
-        tdSql.error("select unique(voltage),top(voltage,1) from unique")
-        tdSql.error("select unique(voltage),first(voltage) from unique")
-        tdSql.error("select unique(voltage),ceil(voltage) from unique")
-        tdSql.error("select unique(voltage),sum(voltage) from unique")
-        tdSql.error("select unique(voltage),unique(num) from unique")
+        tdSql.error("select mode(voltage),top(voltage,1) from smode")
+        tdSql.error("select mode(voltage),ceil(voltage) from smode")
 
         # test normal table
-        tdSql.query('select mode(voltage) from d001')
+        tdSql.query('select mode(voltage),sum(voltage) from d001')
         tdSql.checkRows(1)
         tdSql.checkData(0, 0, 1)
+        tdSql.checkData(0, 1, 2)
         tdSql.query('select mode(num) from d001')
         tdSql.checkRows(1)
         tdSql.checkData(0, 0, None)
@@ -89,12 +82,13 @@ class TDTestCase:
 
 
         # test super table
-        tdSql.query('select mode(voltage) from smode')
+        tdSql.query('select mode(voltage),min(dfloat) from smode')
         tdSql.checkRows(1)
         tdSql.checkData(0, 0, 1)
-        tdSql.query('select mode(num) from smode')
+        tdSql.query('select mode(num),mode(voltage) from smode')
         tdSql.checkRows(1)
         tdSql.checkData(0, 0, None)
+        tdSql.checkData(0, 1, 1)
         tdSql.query('select mode(dbool) from smode')
         tdSql.checkRows(1)
         tdSql.checkData(0, 0, True)
@@ -185,6 +179,51 @@ class TDTestCase:
         tdSql.query('select mode(voltage) from smode where num > 9')
         tdSql.checkRows(1)
         tdSql.checkData(0, 0, None)
+
+        #interval
+        tdSql.query('select mode(voltage) from smode interval(1s)')
+        tdSql.checkRows(6)
+        tdSql.query('select mode(voltage) from smode interval(1y)')
+        tdSql.checkRows(2)
+        tdSql.checkData(0, 0, "2021-01-01 00:00:00")
+        tdSql.checkData(0, 1, 1)
+        tdSql.checkData(1, 0, "2022-01-01 00:00:00")
+        tdSql.checkData(1, 1, None)
+        tdSql.query('select mode(voltage) from smode interval(1n)')
+        tdSql.checkRows(4)
+        tdSql.checkData(0, 0, "2021-10-01 00:00:00")
+        tdSql.checkData(0, 1, 1)
+        tdSql.checkData(1, 0, "2021-11-01 00:00:00")
+        tdSql.checkData(1, 1, 1)
+        tdSql.checkData(2, 0, "2021-12-01 00:00:00")
+        tdSql.checkData(2, 1, 2)
+        tdSql.checkData(3, 0, "2022-01-01 00:00:00")
+        tdSql.checkData(3, 1, None)
+
+        tdSql.query('select mode(voltage) from smode where ts > "2021-09-01 00:00:00" and ts <"2022-02-02 00:00:00" interval(1n) fill(prev)')
+        tdSql.checkRows(6)
+        tdSql.checkData(0, 0, "2021-09-01 00:00:00")
+        tdSql.checkData(0, 1, None)
+        tdSql.checkData(3, 0, "2021-12-01 00:00:00")
+        tdSql.checkData(3, 1, 2)
+        tdSql.checkData(5, 0, "2022-02-01 00:00:00")
+        tdSql.checkData(5, 1, 2)
+
+        #session
+        tdSql.query('select mode(voltage) from d002 session(ts,1w)')
+        tdSql.checkRows(3)
+        tdSql.checkData(0, 0, "2021-11-17 00:31:31")
+        tdSql.checkData(0, 1, 1)
+        tdSql.checkData(1, 0, "2021-12-24 00:31:31")
+        tdSql.checkData(1, 1, 2)
+        tdSql.checkData(2, 0, "2022-01-01 08:00:01")
+        tdSql.checkData(2, 1, 19)
+
+        #state_window
+        tdSql.query('select mode(dfloat) from d002 state_window(voltage)')
+        tdSql.checkRows(3)
+        tdSql.checkData(0, 0, None)
+        tdSql.checkData(1, 0, None)
 
         #slimit/soffset
         tdSql.query('select mode(dchar) from smode group by tbname slimit 2 soffset 1')
