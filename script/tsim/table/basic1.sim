@@ -148,9 +148,11 @@ endi
 system sh/exec.sh -n dnode1 -s stop -x SIGINT
 system sh/exec.sh -n dnode1 -s start
 
+sleep 2000
 print =============== query data
 sql select * from c1
 if $rows != 3 then 
+  print $rows
   return -1
 endi
 
