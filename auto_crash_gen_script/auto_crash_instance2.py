@@ -18,7 +18,7 @@ import time
 
 # set path about run instance
 base_dir = os.path.dirname(os.path.realpath(__file__))
-home_dir = base_dir[:base_dir.find("community")]
+home_dir = base_dir[:base_dir.find("TDengine")]
 run_dir = os.path.join(home_dir,'run_dir')
 run_dir = os.path.abspath(run_dir)
 print("run dir is set at :",run_dir)
@@ -61,7 +61,7 @@ def random_args(args_list):
     args_list["--num-dnodes"]= random.randint(1,7)
     args_list["--num-replicas"]= random.randint(1,args_list["--num-dnodes"])
     args_list["--debug"]=False
-
+    args_list["per-thread-db-connection"]=True
     args_list["--max-steps"]=random.randint(50,300)
     args_list["--num-threads"]=random.randint(8,32) #$ debug
     args_list["--ignore-errors"]=[]   ## can add error codes for detail
@@ -108,7 +108,7 @@ def limits(args_list):
 
 def get_cmds(args_list):
     build_path = get_path()
-    crash_gen_path = build_path[:-5]+"community/tests/pytest/"
+    crash_gen_path = build_path[:-5]+"tests/pytest/"
     bools_args_list = ["--auto-start-service" , "--debug","--run-tdengine","--ignore-errors","--track-memory-leaks","--larger-data","--mix-oos-data","--dynamic-db-table-names",
     "--per-thread-db-connection","--record-ops","--verify-data","--use-shadow-db","--continue-on-exception"]
     arguments = ""
@@ -128,8 +128,8 @@ def get_cmds(args_list):
     return crash_gen_cmd
 
 def run_crash_gen(crash_cmds,result_file):
-    os.system("%s>>%s"%(crash_cmds,result_file))
     os.system('echo "%s">>%s'%(crash_cmds,crash_gen_cmds_file))
+    os.system("%s>>%s"%(crash_cmds,result_file))
 
 def check_status(result_file):
     run_code = subprocess.Popen("tail -n 50 %s"%result_file, shell=True, stdout=subprocess.PIPE,stderr=subprocess.STDOUT).stdout.read().decode("utf-8")
@@ -147,7 +147,7 @@ def main():
         "--continue-on-exception":False }
 
     build_path = get_path()
-    crash_gen_path = build_path[:-5]+"community/tests/pytest/"
+    crash_gen_path = build_path[:-5]+"tests/pytest/"
     print(crash_gen_path)
     if os.path.exists(crash_gen_path+"crash_gen.sh"):
         print(" make sure crash_gen.sh is ready")
