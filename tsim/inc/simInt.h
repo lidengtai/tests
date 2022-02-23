@@ -13,42 +13,43 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _TD_SIM_H_
-#define _TD_SIM_H_
+#ifndef _TD_SIM_INT_H_
+#define _TD_SIM_INT_H_
 
-#include <semaphore.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include "os.h"
 
-#include "../../../include/client/taos.h"
+#include "cJSON.h"
+#include "taos.h"
+#include "taoserror.h"
 #include "tidpool.h"
 #include "tlog.h"
+#include "ttypes.h"
 #include "tutil.h"
 
-#define MAX_MAIN_SCRIPT_NUM 10
+#define MAX_MAIN_SCRIPT_NUM       10
 #define MAX_BACKGROUND_SCRIPT_NUM 10
-#define MAX_FILE_NAME_LEN 256
-#define MAX_ERROR_LEN 1024
-#define MAX_QUERY_VALUE_LEN 40
-#define MAX_QUERY_COL_NUM 20
-#define MAX_QUERY_ROW_NUM 20
-#define MAX_SYSTEM_RESULT_LEN 2048
-#define MAX_VAR_LEN 100
-#define MAX_VAR_NAME_LEN 32
-#define MAX_VAR_VAL_LEN 80
-#define MAX_OPT_NAME_LEN 32
-#define MAX_SIM_CMD_NAME_LEN 40
+#define MAX_FILE_NAME_LEN         256
+#define MAX_ERROR_LEN             1024
+#define MAX_QUERY_VALUE_LEN       40
+#define MAX_QUERY_COL_NUM         20
+#define MAX_QUERY_ROW_NUM         20
+#define MAX_SYSTEM_RESULT_LEN     2048
+#define MAX_VAR_LEN               100
+#define MAX_VAR_NAME_LEN          32
+#define MAX_VAR_VAL_LEN           80
+#define MAX_OPT_NAME_LEN          32
+#define MAX_SIM_CMD_NAME_LEN      40
 
 #ifdef LINUX
-#define SUCCESS_PREFIX "\033[44;32;1m"
+#define SUCCESS_PREFIX  "\033[44;32;1m"
 #define SUCCESS_POSTFIX "\033[0m"
-#define FAILED_PREFIX "\033[44;31;1m"
-#define FAILED_POSTFIX "\033[0m"
+#define FAILED_PREFIX   "\033[44;31;1m"
+#define FAILED_POSTFIX  "\033[0m"
 #else
-#define SUCCESS_PREFIX ""
+#define SUCCESS_PREFIX  ""
 #define SUCCESS_POSTFIX ""
-#define FAILED_PREFIX ""
-#define FAILED_POSTFIX ""
+#define FAILED_PREFIX   ""
+#define FAILED_POSTFIX  ""
 #endif
 
 #define simFatal(...) { if (simDebugFlag & DEBUG_FATAL) { taosPrintLog("SIM FATAL ", 255, __VA_ARGS__); }}
@@ -149,7 +150,7 @@ extern SCommand simCmdList[];
 extern int32_t  simScriptPos;
 extern int32_t  simScriptSucced;
 extern int32_t  simDebugFlag;
-extern char     tsScriptDir[];
+extern char     simScriptDir[];
 extern bool     abortExecution;
 
 SScript *simParseScript(char *fileName);
@@ -177,4 +178,4 @@ bool     simExecuteLineInsertCmd(SScript *script, char *option);
 bool     simExecuteLineInsertErrorCmd(SScript *script, char *option);
 void     simVisuallizeOption(SScript *script, char *src, char *dst);
 
-#endif /*_TD_SIM_H_*/
+#endif /*_TD_SIM_INT_H_*/

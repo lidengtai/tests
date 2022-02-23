@@ -7,6 +7,7 @@ target_link_libraries(
     PUBLIC common
     PUBLIC os
     PUBLIC cjson
+    PUBLIC config
 )
 target_include_directories(
     tsim

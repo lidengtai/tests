@@ -14,19 +14,12 @@
  */
 
 #define _DEFAULT_SOURCE
-#include "cJSON.h"
-#include "os.h"
-#include "sim.h"
-#include "taos.h"
-#include "taoserror.h"
-#include "tglobal.h"
-#include "ttypes.h"
-#include "tutil.h"
+#include "simInt.h"
 
 void simLogSql(char *sql, bool useSharp) {
   static FILE *fp = NULL;
   char         filename[256];
-  sprintf(filename, "%s/sim.sql", tsScriptDir);
+  sprintf(filename, "%s/sim.sql", simScriptDir);
   if (fp == NULL) {
     fp = fopen(filename, "w");
     if (fp == NULL) {
@@ -43,8 +36,18 @@ void simLogSql(char *sql, bool useSharp) {
   fflush(fp);
 }
 
-char *simParseArbitratorName(char *varName);
-char *simParseHostName(char *varName);
+char *simParseArbitratorName(char *varName) {
+  static char hostName[140];
+  sprintf(hostName, "%s:%d", "localhost", 8000);
+  return hostName;
+}
+
+char *simParseHostName(char *varName) {
+  static char hostName[140];
+  sprintf(hostName, "%s", "localhost");
+  return hostName;
+}
+
 char *simGetVariable(SScript *script, char *varName, int32_t varLen) {
   if (strncmp(varName, "hostname", 8) == 0) {
     return simParseHostName(varName);
@@ -326,10 +329,10 @@ bool simExecuteSystemCmd(SScript *script, char *option) {
   char buf[4096] = {0};
 
 #ifndef WINDOWS
-  sprintf(buf, "cd %s; ", tsScriptDir);
+  sprintf(buf, "cd %s; ", simScriptDir);
   simVisuallizeOption(script, option, buf + strlen(buf));
 #else
-  sprintf(buf, "%s%s", tsScriptDir, option);
+  sprintf(buf, "%s%s", simScriptDir, option);
   simReplaceShToBat(buf);
 #endif
 
@@ -368,9 +371,9 @@ bool simExecuteSystemContentCmd(SScript *script, char *option) {
   char buf[4096] = {0};
   char buf1[4096 + 512] = {0};
   char filename[400] = {0};
-  sprintf(filename, "%s/%s.tmp", tsScriptDir, script->fileName);
+  sprintf(filename, "%s/%s.tmp", simScriptDir, script->fileName);
 
-  sprintf(buf, "cd %s; ", tsScriptDir);
+  sprintf(buf, "cd %s; ", simScriptDir);
   simVisuallizeOption(script, option, buf + strlen(buf));
   sprintf(buf1, "%s > %s 2>/dev/null", buf, filename);
 
@@ -763,7 +766,7 @@ bool simExecuteSqlSlowCmd(SScript *script, char *rest) {
 bool simExecuteRestfulCmd(SScript *script, char *rest) {
   FILE *fp = NULL;
   char  filename[256];
-  sprintf(filename, "%s/tmp.sql", tsScriptDir);
+  sprintf(filename, "%s/tmp.sql", simScriptDir);
   fp = fopen(filename, "w");
   if (fp == NULL) {
     fprintf(stderr, "ERROR: failed to open file: %s\n", filename);
