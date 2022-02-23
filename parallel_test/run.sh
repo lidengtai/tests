@@ -213,6 +213,9 @@ function run_thread() {
         local redo_count=1
         start_time=`date +%s`
         while [ ${redo_count} -lt 6 ]; do
+            if [ -f $log_dir/$case_file.log ]; then
+                cp $log_dir/$case_file.log $log_dir/$case_file.${redo_count}.redolog
+            fi
             echo "${hosts[index]}-${thread_no} order:${count}, redo:${redo_count} task:${line}" >$log_dir/$case_file.log
             echo -e "\e[33m >>>>> \e[0m ${case_cmd}"
             date >>$log_dir/$case_file.log
