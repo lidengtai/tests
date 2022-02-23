@@ -58,10 +58,6 @@
  */
 
 #define _DEFAULT_SOURCE
-#include "os.h"
-#include "sim.h"
-#include "tutil.h"
-
 #include "simParse.h"
 
 static SCommand *cmdHashList[MAX_NUM_CMD];
@@ -186,7 +182,7 @@ SScript *simParseScript(char *fileName) {
   if ((fileName[0] == '.') || (fileName[0] == '/')) {
     strcpy(name, fileName);
   } else {
-    sprintf(name, "%s/%s", tsScriptDir, fileName);
+    sprintf(name, "%s" TD_DIRSEP "%s", simScriptDir, fileName);
   }
 
   if ((fd = fopen(name, "r")) == NULL) {

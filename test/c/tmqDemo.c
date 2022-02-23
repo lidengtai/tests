@@ -609,7 +609,7 @@ void printParaIntoFile() {
   struct tm tm = *localtime(&tTime);
 
   fprintf(fp, "###################################################################\n");
-  fprintf(fp, "# configDir:                %s\n", configDir);
+  fprintf(fp, "# configDir:                %s\n",  configDir);
   fprintf(fp, "# dbName:                   %s\n",  g_stConfInfo.dbName);
   fprintf(fp, "# stbName:                  %s\n",  g_stConfInfo.stbName);
   fprintf(fp, "# vnodeWalPath:             %s\n",  g_stConfInfo.vnodeWalPath);
