@@ -17,23 +17,24 @@
 #include "simInt.h"
 
 void simLogSql(char *sql, bool useSharp) {
-  static FILE *fp = NULL;
+  static TdFilePtr pFile = NULL;
   char         filename[256];
   sprintf(filename, "%s/sim.sql", simScriptDir);
-  if (fp == NULL) {
-    fp = fopen(filename, "w");
-    if (fp == NULL) {
+  if (pFile == NULL) {
+    // fp = fopen(filename, "w");
+    pFile = taosOpenFile(filename, TD_FILE_CTEATE | TD_FILE_WRITE | TD_FILE_TRUNC);
+    if (pFile == NULL) {
       fprintf(stderr, "ERROR: failed to open file: %s\n", filename);
       return;
     }
   }
   if (useSharp) {
-    fprintf(fp, "# %s;\n", sql);
+    taosFprintfFile(pFile, "# %s;\n", sql);
   } else {
-    fprintf(fp, "%s;\n", sql);
+    taosFprintfFile(pFile, "%s;\n", sql);
   }
 
-  fflush(fp);
+  taosFsyncFile(pFile);
 }
 
 char *simParseArbitratorName(char *varName) {
@@ -357,10 +358,11 @@ bool simExecuteSystemCmd(SScript *script, char *option) {
 void simStoreSystemContentResult(SScript *script, char *filename) {
   memset(script->system_ret_content, 0, MAX_SYSTEM_RESULT_LEN);
 
-  FILE *fd;
-  if ((fd = fopen(filename, "r")) != NULL) {
-    fread(script->system_ret_content, 1, MAX_SYSTEM_RESULT_LEN - 1, fd);
-    fclose(fd);
+  TdFilePtr pFile;
+  // if ((fd = fopen(filename, "r")) != NULL) {
+  if ((pFile = taosOpenFile(filename, TD_FILE_READ)) != NULL) {
+    taosReadFile(pFile, script->system_ret_content, MAX_SYSTEM_RESULT_LEN - 1);
+    taosCloseFile(&pFile);
     char rmCmd[MAX_FILE_NAME_LEN] = {0};
     sprintf(rmCmd, "rm -f %s", filename);
     system(rmCmd);
@@ -764,11 +766,12 @@ bool simExecuteSqlSlowCmd(SScript *script, char *rest) {
 }
 
 bool simExecuteRestfulCmd(SScript *script, char *rest) {
-  FILE *fp = NULL;
+  TdFilePtr pFile = NULL;
   char  filename[256];
   sprintf(filename, "%s/tmp.sql", simScriptDir);
-  fp = fopen(filename, "w");
-  if (fp == NULL) {
+  // fp = fopen(filename, "w");
+  pFile = taosOpenFile(filename, TD_FILE_CTEATE | TD_FILE_WRITE | TD_FILE_TRUNC);
+  if (pFile == NULL) {
     fprintf(stderr, "ERROR: failed to open file: %s\n", filename);
     return false;
   }
@@ -780,13 +783,13 @@ bool simExecuteRestfulCmd(SScript *script, char *rest) {
   int32_t times;
   sscanf(rest, "%s %s %d %d %s", db, tb, &ts, &times, gzip);
 
-  fprintf(fp, "insert into %s.%s values ", db, tb);
+  taosFprintfFile(pFile, "insert into %s.%s values ", db, tb);
   for (int32_t i = 0; i < times; ++i) {
-    fprintf(fp, "(%d000, %d)", ts + i, ts);
+    taosFprintfFile(pFile, "(%d000, %d)", ts + i, ts);
   }
-  fprintf(fp, "  \n");
-  fflush(fp);
-  fclose(fp);
+  taosFprintfFile(pFile, "  \n");
+  taosFsyncFile(pFile);
+  taosCloseFile(&pFile);
 
   char cmd[1024] = {0};
   if (strcmp(gzip, "gzip") == 0) {
