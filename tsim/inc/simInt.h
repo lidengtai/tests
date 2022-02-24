@@ -19,12 +19,15 @@
 #include "os.h"
 
 #include "cJSON.h"
+#include "tconfig.h"
 #include "taos.h"
 #include "taoserror.h"
 #include "tidpool.h"
 #include "tlog.h"
+#include "ttimer.h"
 #include "ttypes.h"
 #include "tutil.h"
+#include "tglobal.h"
 
 #define MAX_MAIN_SCRIPT_NUM       10
 #define MAX_BACKGROUND_SCRIPT_NUM 10

@@ -15,8 +15,7 @@
 
 #define _DEFAULT_SOURCE
 #include "simInt.h"
-#include "ttimer.h"
-#include "config.h"
+#include "tconfig.h"
 
 SScript *simScriptList[MAX_MAIN_SCRIPT_NUM];
 SCommand simCmdList[SIM_CMD_END];
@@ -28,53 +27,13 @@ char     simScriptDir[PATH_MAX] = {0};
 
 extern bool simExecSuccess;
 
-
 int32_t simInitCfg() {
-  SConfig *pCfg = cfgInit();
-  if (pCfg == NULL) return -1;
+  taosCreateLog("simlog", 1, configDir, NULL, NULL, 1);
+  taosInitCfg(configDir, NULL, NULL, 1);
 
-  cfgAddDir(pCfg, "logDir", "/var/log/taos");
-  cfgAddBool(pCfg, "asyncLog", 1);
-  cfgAddInt32(pCfg, "numOfLogLines", 10000000, 1000, 2000000000);
-  cfgAddInt32(pCfg, "cDebugFlag", cDebugFlag, 0, 255);
-  cfgAddInt32(pCfg, "uDebugFlag", uDebugFlag, 0, 255);
-  cfgAddInt32(pCfg, "rpcDebugFlag", rpcDebugFlag, 0, 255);
-  cfgAddInt32(pCfg, "tmrDebugFlag", tmrDebugFlag, 0, 255);
-  cfgAddInt32(pCfg, "simDebugFlag", simDebugFlag, 0, 255);
-  
-  cfgAddInt32(pCfg, "debugFlag", 0, 0, 255);
-  cfgAddString(pCfg, "scriptDir", configDir);
-
-  char cfgFile[PATH_MAX + 100] = {0};
-  taosExpandDir(cfgFile, configDir, PATH_MAX);
-  snprintf(cfgFile, sizeof(cfgFile), "%s" TD_DIRSEP "taos.cfg", configDir);
-  if (cfgLoad(pCfg, CFG_STYPE_CFG_FILE, cfgFile) != 0) {
-    simError("failed to load from config file:%s since %s\n", cfgFile, terrstr());
-    return -1;
-  }
-
-  osSetLogDir(cfgGetItem(pCfg, "logDir")->str);
-  tsAsyncLog = cfgGetItem(pCfg, "asyncLog")->bval;
-  tsNumOfLogLines = cfgGetItem(pCfg, "numOfLogLines")->i32;
-  cDebugFlag = cfgGetItem(pCfg, "cDebugFlag")->i32;
-  tmrDebugFlag = cfgGetItem(pCfg, "tmrDebugFlag")->i32;
-  uDebugFlag = cfgGetItem(pCfg, "uDebugFlag")->i32;
-  rpcDebugFlag = cfgGetItem(pCfg, "rpcDebugFlag")->i32;
+  SConfig *pCfg = taosGetCfg();
   simDebugFlag = cfgGetItem(pCfg, "simDebugFlag")->i32;
-
-  int32_t debugFlag = cfgGetItem(pCfg, "debugFlag")->i32;
-  taosSetAllDebugFlag(debugFlag);
-
   tstrncpy(simScriptDir, cfgGetItem(pCfg, "scriptDir")->str, PATH_MAX);
-
-  if (taosInitLog("simlog", 1) != 0) {
-    simError("failed to init log file since %s\n", terrstr());
-    cfgCleanup(pCfg);
-    return -1;
-  }
-
-  cfgDumpCfg(pCfg);
-  cfgCleanup(pCfg);
   return 0;
 }
 
