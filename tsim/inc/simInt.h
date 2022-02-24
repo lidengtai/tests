@@ -19,10 +19,12 @@
 #include "os.h"
 
 #include "cJSON.h"
+#include "config.h"
 #include "taos.h"
 #include "taoserror.h"
 #include "tidpool.h"
 #include "tlog.h"
+#include "ttimer.h"
 #include "ttypes.h"
 #include "tutil.h"
 

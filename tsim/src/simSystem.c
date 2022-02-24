@@ -15,8 +15,6 @@
 
 #define _DEFAULT_SOURCE
 #include "simInt.h"
-#include "ttimer.h"
-#include "config.h"
 
 SScript *simScriptList[MAX_MAIN_SCRIPT_NUM];
 SCommand simCmdList[SIM_CMD_END];
@@ -27,7 +25,6 @@ void     simCloseTaosdConnect(SScript *script);
 char     simScriptDir[PATH_MAX] = {0};
 
 extern bool simExecSuccess;
-
 
 int32_t simInitCfg() {
   SConfig *pCfg = cfgInit();
