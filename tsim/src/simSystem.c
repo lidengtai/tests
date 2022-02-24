@@ -33,15 +33,14 @@ int32_t simInitCfg() {
   SConfig *pCfg = cfgInit();
   if (pCfg == NULL) return -1;
 
-  cfgAddDir(pCfg, "logDir", "/var/log/taos");
-  cfgAddBool(pCfg, "asyncLog", 1);
-  cfgAddInt32(pCfg, "numOfLogLines", 10000000, 1000, 2000000000);
+  cfgAddDir(pCfg, "logDir", osLogDir());
+  cfgAddBool(pCfg, "asyncLog", tsAsyncLog);
+  cfgAddInt32(pCfg, "numOfLogLines", tsNumOfLogLines, 1000, 2000000000);
   cfgAddInt32(pCfg, "cDebugFlag", cDebugFlag, 0, 255);
   cfgAddInt32(pCfg, "uDebugFlag", uDebugFlag, 0, 255);
   cfgAddInt32(pCfg, "rpcDebugFlag", rpcDebugFlag, 0, 255);
   cfgAddInt32(pCfg, "tmrDebugFlag", tmrDebugFlag, 0, 255);
   cfgAddInt32(pCfg, "simDebugFlag", simDebugFlag, 0, 255);
-  
   cfgAddInt32(pCfg, "debugFlag", 0, 0, 255);
   cfgAddString(pCfg, "scriptDir", configDir);
 
@@ -57,9 +56,9 @@ int32_t simInitCfg() {
   tsAsyncLog = cfgGetItem(pCfg, "asyncLog")->bval;
   tsNumOfLogLines = cfgGetItem(pCfg, "numOfLogLines")->i32;
   cDebugFlag = cfgGetItem(pCfg, "cDebugFlag")->i32;
-  tmrDebugFlag = cfgGetItem(pCfg, "tmrDebugFlag")->i32;
   uDebugFlag = cfgGetItem(pCfg, "uDebugFlag")->i32;
   rpcDebugFlag = cfgGetItem(pCfg, "rpcDebugFlag")->i32;
+  tmrDebugFlag = cfgGetItem(pCfg, "tmrDebugFlag")->i32;
   simDebugFlag = cfgGetItem(pCfg, "simDebugFlag")->i32;
 
   int32_t debugFlag = cfgGetItem(pCfg, "debugFlag")->i32;
