@@ -53,7 +53,7 @@ int32_t simInitCfg() {
     return -1;
   }
 
-  tstrncpy(tsLogDir, cfgGetItem(pCfg, "logDir")->str, PATH_MAX);
+  osSetLogDir(cfgGetItem(pCfg, "logDir")->str);
   tsAsyncLog = cfgGetItem(pCfg, "asyncLog")->bval;
   tsNumOfLogLines = cfgGetItem(pCfg, "numOfLogLines")->i32;
   cDebugFlag = cfgGetItem(pCfg, "cDebugFlag")->i32;
