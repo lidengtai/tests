@@ -79,7 +79,7 @@ static SConfInfo g_stConfInfo = {
 };
 
 char* g_pRowValue = NULL;
-FILE* g_fp = NULL;
+TdFilePtr g_fp = NULL;
 
 static void printHelp() {
   char indent[10] = "        ";
@@ -429,7 +429,7 @@ void perf_loop(tmq_t* tmq, tmq_list_t* topics, int32_t totalMsgs, int64_t walLog
   }
 
   pPrint("consume result: msgs: %d, skip log cnt: %d, time used:%.3f second\n", batchCnt, skipLogNum, consumeTime);
-  fprintf(g_fp, "|%10d    |   %10.3f    |  %8.2f  |  %10.2f|    %10.2f    |\n", batchCnt, consumeTime, (double)batchCnt / consumeTime, (double)walLogSize / (1024 * 1024.0) / consumeTime, (double)walLogSize / 1024.0 / batchCnt);
+  taosFprintfFile(g_fp, "|%10d    |   %10.3f    |  %8.2f  |  %10.2f|    %10.2f    |\n", batchCnt, consumeTime, (double)batchCnt / consumeTime, (double)walLogSize / (1024 * 1024.0) / consumeTime, (double)walLogSize / 1024.0 / batchCnt);
 
   err = tmq_consumer_close(tmq);
   if (err) {
@@ -598,36 +598,37 @@ int32_t syncWriteDataByRatio() {
 }
 
 void printParaIntoFile() {
-  FILE *fp = fopen(g_stConfInfo.resultFileName, "a");
-  if (NULL == fp) {
+  // FILE *fp = fopen(g_stConfInfo.resultFileName, "a");
+  TdFilePtr pFile = taosOpenFile(g_stConfInfo.resultFileName, TD_FILE_CTEATE | TD_FILE_WRITE | TD_FILE_APPEND);
+  if (NULL == pFile) {
     fprintf(stderr, "Failed to open %s for save result\n", g_stConfInfo.resultFileName);
     exit -1;
   };
-  g_fp = fp;
+  g_fp = pFile;
 
   time_t tTime = time(NULL);
   struct tm tm = *localtime(&tTime);
 
-  fprintf(fp, "###################################################################\n");
-  fprintf(fp, "# configDir:                %s\n",  configDir);
-  fprintf(fp, "# dbName:                   %s\n",  g_stConfInfo.dbName);
-  fprintf(fp, "# stbName:                  %s\n",  g_stConfInfo.stbName);
-  fprintf(fp, "# vnodeWalPath:             %s\n",  g_stConfInfo.vnodeWalPath);
-  fprintf(fp, "# numOfTables:              %d\n",  g_stConfInfo.numOfTables);
-  fprintf(fp, "# numOfThreads:             %d\n",  g_stConfInfo.numOfThreads);
-  fprintf(fp, "# numOfVgroups:             %d\n",  g_stConfInfo.numOfVgroups);
-  fprintf(fp, "# runMode:                  %d\n",  g_stConfInfo.runMode);
-  fprintf(fp, "# ratio:                    %f\n",  g_stConfInfo.ratio);
-  fprintf(fp, "# numOfColumn:              %d\n",  g_stConfInfo.numOfColumn);
-  fprintf(fp, "# batchNumOfRow:            %d\n",  g_stConfInfo.batchNumOfRow);
-  fprintf(fp, "# totalRowsOfPerTbl:        %d\n",  g_stConfInfo.totalRowsOfPerTbl);
-  fprintf(fp, "# totalRowsOfT2:            %d\n",  g_stConfInfo.totalRowsOfT2);
-  fprintf(fp, "# Test time:                %d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1,
+  taosFprintfFile(pFile, "###################################################################\n");
+  taosFprintfFile(pFile, "# configDir:                %s\n",  configDir);
+  taosFprintfFile(pFile, "# dbName:                   %s\n",  g_stConfInfo.dbName);
+  taosFprintfFile(pFile, "# stbName:                  %s\n",  g_stConfInfo.stbName);
+  taosFprintfFile(pFile, "# vnodeWalPath:             %s\n",  g_stConfInfo.vnodeWalPath);
+  taosFprintfFile(pFile, "# numOfTables:              %d\n",  g_stConfInfo.numOfTables);
+  taosFprintfFile(pFile, "# numOfThreads:             %d\n",  g_stConfInfo.numOfThreads);
+  taosFprintfFile(pFile, "# numOfVgroups:             %d\n",  g_stConfInfo.numOfVgroups);
+  taosFprintfFile(pFile, "# runMode:                  %d\n",  g_stConfInfo.runMode);
+  taosFprintfFile(pFile, "# ratio:                    %f\n",  g_stConfInfo.ratio);
+  taosFprintfFile(pFile, "# numOfColumn:              %d\n",  g_stConfInfo.numOfColumn);
+  taosFprintfFile(pFile, "# batchNumOfRow:            %d\n",  g_stConfInfo.batchNumOfRow);
+  taosFprintfFile(pFile, "# totalRowsOfPerTbl:        %d\n",  g_stConfInfo.totalRowsOfPerTbl);
+  taosFprintfFile(pFile, "# totalRowsOfT2:            %d\n",  g_stConfInfo.totalRowsOfT2);
+  taosFprintfFile(pFile, "# Test time:                %d-%02d-%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1,
                                                                            tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-  fprintf(fp, "###################################################################\n");
-  fprintf(fp, "|-------------------------------insert info-----------------------------|--------------------------------consume info---------------------------------|\n");
-  fprintf(fp, "|batch size| insert msgs | insert time(s) |   msgs/s   | walLogSize(MB) | consume msgs | consume time(s) |   msgs/s   |    MB/s    | avg msg size(KB) |\n");
-  fprintf(g_fp, "|%10d", g_stConfInfo.batchNumOfRow);
+  taosFprintfFile(pFile, "###################################################################\n");
+  taosFprintfFile(pFile, "|-------------------------------insert info-----------------------------|--------------------------------consume info---------------------------------|\n");
+  taosFprintfFile(pFile, "|batch size| insert msgs | insert time(s) |   msgs/s   | walLogSize(MB) | consume msgs | consume time(s) |   msgs/s   |    MB/s    | avg msg size(KB) |\n");
+  taosFprintfFile(g_fp, "|%10d", g_stConfInfo.batchNumOfRow);
 }
 
 int main(int32_t argc, char *argv[]) {
@@ -680,7 +681,7 @@ int main(int32_t argc, char *argv[]) {
 	}
 	
 	pPrint("insert result: %d rows, %d msgs, time:%.3f sec, speed:%.1f rows/second, %.1f msgs/second\n", totalRows, totalMsgs, seconds, rowsSpeed, msgsSpeed);
-	fprintf(g_fp, "|%10d   |   %10.3f   |  %8.2f  |   %10.3f   ", totalMsgs, seconds, msgsSpeed, (double)walLogSize/(1024 * 1024.0));
+	taosFprintfFile(g_fp, "|%10d   |   %10.3f   |  %8.2f  |   %10.3f   ", totalMsgs, seconds, msgsSpeed, (double)walLogSize/(1024 * 1024.0));
   }
 
   if (g_stConfInfo.runMode == TMQ_RUN_ONLY_INSERT) {
@@ -696,8 +697,8 @@ int main(int32_t argc, char *argv[]) {
   perf_loop(tmq, topic_list, totalMsgs, walLogSize);
 
   tfree(g_pRowValue);
-  fprintf(g_fp, "\n");  
-  fclose(g_fp);  
+  taosFprintfFile(g_fp, "\n");  
+  taosCloseFile(&g_fp);  
   return 0;
 }
 
