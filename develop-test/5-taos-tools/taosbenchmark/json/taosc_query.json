@@ -12,7 +12,7 @@
   "specified_table_query":
   {
     "query_interval": 1,
-    "concurrent":1,
+    "threads":1,
     "sqls":
     [{
       "sql": "select count(*) from db.stb",
