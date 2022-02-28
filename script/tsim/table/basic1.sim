@@ -147,7 +147,7 @@ endi
 
 system sh/exec.sh -n dnode1 -s stop -x SIGINT
 
-system sh/exec.sh -n dnode1 -s start -v
+system sh/exec.sh -n dnode1 -s start
 
 sleep 10000
 print =============== query data
