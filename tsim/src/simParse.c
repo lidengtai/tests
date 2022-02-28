@@ -186,7 +186,7 @@ SScript *simParseScript(char *fileName) {
   }
 
   // if ((fd = fopen(name, "r")) == NULL) {
-  if ((pFile = taosOpenFile(name, TD_FILE_READ)) == NULL) {
+  if ((pFile = taosOpenFile(name, TD_FILE_READ | TD_FILE_STREAM)) == NULL) {
     simError("failed to open file:%s", name);
     return NULL;
   }
