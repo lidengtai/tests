@@ -22,7 +22,7 @@ void simLogSql(char *sql, bool useSharp) {
   sprintf(filename, "%s/sim.sql", simScriptDir);
   if (pFile == NULL) {
     // fp = fopen(filename, "w");
-    pFile = taosOpenFile(filename, TD_FILE_CTEATE | TD_FILE_WRITE | TD_FILE_TRUNC);
+    pFile = taosOpenFile(filename, TD_FILE_CTEATE | TD_FILE_WRITE | TD_FILE_TRUNC | TD_FILE_STREAM);
     if (pFile == NULL) {
       fprintf(stderr, "ERROR: failed to open file: %s\n", filename);
       return;
@@ -770,7 +770,7 @@ bool simExecuteRestfulCmd(SScript *script, char *rest) {
   char  filename[256];
   sprintf(filename, "%s/tmp.sql", simScriptDir);
   // fp = fopen(filename, "w");
-  pFile = taosOpenFile(filename, TD_FILE_CTEATE | TD_FILE_WRITE | TD_FILE_TRUNC);
+  pFile = taosOpenFile(filename, TD_FILE_CTEATE | TD_FILE_WRITE | TD_FILE_TRUNC | TD_FILE_STREAM);
   if (pFile == NULL) {
     fprintf(stderr, "ERROR: failed to open file: %s\n", filename);
     return false;
