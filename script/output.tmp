@@ -1,0 +1,48 @@
+------------------------------------------------------------------------
+Start TDengine Testing Case ...
+BUILD_DIR: /root/TDengine/build
+SIM_DIR  : /root/TDengine/sim
+CODE_DIR : /root/TDengine/tests/script
+CFG_DIR  : /root/TDengine/sim/tsim/cfg
+------------------------------------------------------------------------
+ExcuteCmd: /root/TDengine/build/tests/tsim/tsim -c /root/TDengine/sim/tsim/cfg -f tsim/dnode/basic1.sim
+02/28 19:21:52.405351 00833367 SIM simulator is running ...
+Executing deploy.sh
+SCRIPT_DIR: /root/TDengine/tests/script
+Executing deploy.sh
+SCRIPT_DIR: /root/TDengine/tests/script
+------------ start dnode1
+ExcuteCmd: /root/TDengine/build/source/dnode/mgmt/daemon/taosd -c /root/TDengine/sim/dnode1/cfg
+------------ start dnode2
+ExcuteCmd: /root/TDengine/build/source/dnode/mgmt/daemon/taosd -c /root/TDengine/sim/dnode2/cfg
+02/28 19:21:53.995653 00833367 SIM script:tsim/dnode/basic1.sim, =============== show dnodes
+02/28 19:21:54.300877 00833367 SIM script:tsim/dnode/basic1.sim, =============== create dnodes
+02/28 19:21:54.431724 00833367 SIM script:tsim/dnode/basic1.sim, sleep 2000ms begin
+02/28 19:21:56.433697 00833367 SIM script:tsim/dnode/basic1.sim, sleep 2000ms finished
+02/28 19:21:56.732870 00833367 SIM script:tsim/dnode/basic1.sim, =============== create database
+02/28 19:21:58.402096 00833367 SIM script:tsim/dnode/basic1.sim, =============== create table
+02/28 19:21:59.020834 00833367 SIM script:tsim/dnode/basic1.sim, st 22-02-28 19:21:58.517 2
+02/28 19:22:00.056884 00833367 SIM script:tsim/dnode/basic1.sim, c5 70-01-01 08:00:00.000 0
+02/28 19:22:00.062774 00833367 SIM script:tsim/dnode/basic1.sim, =============== insert data
+02/28 19:22:01.451329 00833367 SIM script:tsim/dnode/basic1.sim, =============== query data
+02/28 19:22:01.622916 00833367 SIM script:tsim/dnode/basic1.sim, 22-02-28 19:22:01.163 1
+02/28 19:22:01.627108 00833367 SIM script:tsim/dnode/basic1.sim, 22-02-28 19:22:02.227 2
+02/28 19:22:01.632253 00833367 SIM script:tsim/dnode/basic1.sim, 22-02-28 19:22:03.290 2
+02/28 19:22:03.226364 00833367 SIM script:tsim/dnode/basic1.sim, =============== drop dnode
+------------ stop dnode1
+try to kill by signal SIGINT
+try to kill by signal SIGINT
+try to kill by signal SIGINT
+------------ stop dnode2
+try to kill by signal SIGINT
+try to kill by signal SIGINT
+02/28 19:22:08.797313 00833367 SIM script:tsim/dnode/basic1.sim, return cmd execute with:1
+02/28 19:22:08.801200 00833367 SIM script:tsim/dnode/basic1.sim, success
+02/28 19:22:08.806941 00833367 SIM script:tsim/dnode/basic1.sim, background script num:0, stop them
+02/28 19:22:08.812051 00833367 SIM ----------------------------------------------------------------------
+02/28 19:22:08.814000 00833367 SIM Simulation Test Done, 1 Passed:
+
+02/28 19:22:08.817809 00833367 SIM thread is stopped
+02/28 19:22:08.819748 00833367 SIM execute result 0
+failed to connect to server, reason: Unable to establish connection
+

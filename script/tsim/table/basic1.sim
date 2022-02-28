@@ -149,7 +149,7 @@ system sh/exec.sh -n dnode1 -s stop -x SIGINT
 
 system sh/exec.sh -n dnode1 -s start -v
 
-sleep 5000
+sleep 10000
 print =============== query data
 sql select * from c1
 if $rows != 3 then 
